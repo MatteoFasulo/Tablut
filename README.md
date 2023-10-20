@@ -1,2 +1,2 @@
 # Tablut
-Tablut Comptetition
+Tablut Competition
