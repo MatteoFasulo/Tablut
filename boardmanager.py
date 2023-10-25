@@ -164,7 +164,22 @@ class Board():
             return False
         return True
     
-
+    def __check_attacks(self, x, y):
+        #TODO: controllo di mangiata (guardare le regole perché non è chiaro) con solamente un pezzo (e quindi quando ci sono tipo i muri di mezzo)
+        #Controllo orizzontale
+        if x > 1:
+            if self.pieces[x-2][y] == self.pieces[x][y] and self.pieces[x-1][y] != self.pieces[x][y]:
+                self.pieces[x-1][y] = 0
+        if x < len(self.pieces)-2:
+            if self.pieces[x+2][y] == self.pieces[x][y] and self.pieces[x+1][y] != self.pieces[x][y]:
+                self.pieces[x+1][y] = 0
+        if y > 1:
+            if self.pieces[x][y-2] == self.pieces[x][y] and self.pieces[x][y-1] != self.pieces[x][y]:
+                self.pieces[x][y-1] = 0
+        if y < len(self.pieces)-2:
+            if self.pieces[x][y+2] == self.pieces[x][y] and self.pieces[x][y+1] != self.pieces[x][y]:
+                self.pieces[x][y+1] = 0
+        
 
 
     def move(self, move):
@@ -176,9 +191,9 @@ class Board():
         """
         x1,y1,x2,y2 = self.__convert_move(move)
         if self.__check_legality(x1,y1,x2,y2):
-
             self.pieces[x2][y2] = self.pieces[x1][y1]
             self.pieces[x1][y1] = 0 
+            self.__check_attacks(x2,y2)
         else:
             raise BadMoveException(f"Your move {move} is not legal")
 
