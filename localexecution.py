@@ -14,6 +14,7 @@ def localrun(player_team : str, player_name : str, timelimit : int):
     """
 
     board = Board()
+    print(f"White heuristic: {board.white_fitness(-1,1)}")
     board.print_board()
 
     while True:
@@ -22,4 +23,7 @@ def localrun(player_team : str, player_name : str, timelimit : int):
             board.move(move)
         except BadMoveException as e:
             print(e)
+        
+        print(f"White heuristic: {board.white_fitness(-2,1)}")
+
         board.print_board()
