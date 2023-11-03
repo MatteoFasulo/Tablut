@@ -53,3 +53,32 @@ def white_fitness(pieces, whites,alpha0, beta0):
             fitness += beta0 * ((white[0] - 4)**2 + (white[1] - 4)**2)**0.5
 
         return fitness
+
+
+# TODO: implement the dynamic analysis logic
+# If I can eat a black piece, I have to do it
+# TODO: Does the king eat?
+# What should I do with these moves?
+def eat_black(pieces, whites):
+    '''
+    If a black piece can be eaten it returns a list of initial and final position of the white piece that eats
+    '''
+    moves_to_eat = []
+    for white in whites:
+        # Checking right
+        for i in range(white[1]+2, len(pieces)-1, 1):
+            if pieces[white[0]][i] == 1 and pieces[white[0]][i+1] == 2:
+                moves_to_eat.append(white, [white[0], i-1])
+        # Checking left
+        for i in range(1, white[1]-1, 1):
+            if pieces[white[0]][i] == 1 and pieces[white[0]][i-1] == 2:
+                moves_to_eat.append(white, [white[0], i+1])
+        # Checking up
+        for i in range(1, white[0]-1, 1):
+            if pieces[i][white[1]] == 1 and pieces[i-1][white[1]] == 2:
+                moves_to_eat.append(white, [i+1, white[1]])
+        # Checking down
+        for i in range(white[0]+2, len(pieces)-1, 1):
+            if pieces[i][white[1]] == 1 and pieces[i+1][white[1]] == 2:
+                moves_to_eat.append(white, [i-1, white[1]])
+    return moves_to_eat
