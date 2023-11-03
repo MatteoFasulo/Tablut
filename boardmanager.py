@@ -199,21 +199,64 @@ class Board():
     
     def __check_attacks(self, x, y):
         #TODO: controllo di mangiata (guardare le regole perché non è chiaro) con solamente un pezzo (e quindi quando ci sono tipo i muri di mezzo)
-        #TODO: rimuovere da whites e da blacks i pezzi mangiati
         #Horizontal check
         if x > 1:
             if self.pieces[x-2][y] == self.pieces[x][y] and self.pieces[x-1][y] != self.pieces[x][y]:
                 self.pieces[x-1][y] = 0
+                has_deleted = False
+                for black in self.blacks:
+                    if black[0] == x-1 and black[1] == y:
+                        del black
+                        has_deleted = True
+                        break
+                if not has_deleted:
+                    for white in self.whites:
+                        if white[0] == x-1 and white[1] == y:
+                            del white
+                            break
         if x < len(self.pieces)-2:
             if self.pieces[x+2][y] == self.pieces[x][y] and self.pieces[x+1][y] != self.pieces[x][y]:
                 self.pieces[x+1][y] = 0
+                has_deleted = False
+                for black in self.blacks:
+                    if black[0] == x-1 and black[1] == y:
+                        del black
+                        has_deleted = True
+                        break
+                if not has_deleted:
+                    for white in self.whites:
+                        if white[0] == x-1 and white[1] == y:
+                            del white
+                            break
         #Vertical check
         if y > 1:
             if self.pieces[x][y-2] == self.pieces[x][y] and self.pieces[x][y-1] != self.pieces[x][y]:
                 self.pieces[x][y-1] = 0
+                has_deleted = False
+                for black in self.blacks:
+                    if black[0] == x-1 and black[1] == y:
+                        del black
+                        has_deleted = True
+                        break
+                if not has_deleted:
+                    for white in self.whites:
+                        if white[0] == x-1 and white[1] == y:
+                            del white
+                            break
         if y < len(self.pieces)-2:
             if self.pieces[x][y+2] == self.pieces[x][y] and self.pieces[x][y+1] != self.pieces[x][y]:
                 self.pieces[x][y+1] = 0
+                has_deleted = False
+                for black in self.blacks:
+                    if black[0] == x-1 and black[1] == y:
+                        del black
+                        has_deleted = True
+                        break
+                if not has_deleted:
+                    for white in self.whites:
+                        if white[0] == x-1 and white[1] == y:
+                            del white
+                            break
         
 
 
