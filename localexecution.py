@@ -15,6 +15,10 @@ def localrun(player_team : str, player_name : str, timelimit : int):
 
     board = Board()
     print(f"White heuristic: {board.white_fitness(-1,1)}")
+    heuristic = []
+    for move in board.all_possible_moves("WHITE"):
+        #TODO: complete with the computed heuristic for the move
+        heuristic.append((move, ))
     board.print_board()
 
     while True:

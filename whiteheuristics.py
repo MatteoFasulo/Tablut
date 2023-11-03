@@ -57,28 +57,28 @@ def white_fitness(pieces, whites,alpha0, beta0):
 
 # TODO: implement the dynamic analysis logic
 # If I can eat a black piece, I have to do it
-# TODO: Does the king eat?
+# TODO: Does the king eat? If so, remember to put [] when concatenation with whites
 # What should I do with these moves?
-def eat_black(pieces, whites):
+def eat_black(board):
     '''
     If a black piece can be eaten it returns a list of initial and final position of the white piece that eats
     '''
     moves_to_eat = []
-    for white in whites:
+    for white in board.whites:
         # Checking right
-        for i in range(white[1]+2, len(pieces)-1, 1):
-            if pieces[white[0]][i] == 1 and pieces[white[0]][i+1] == 2:
+        for i in range(white[1]+2, len(board.pieces)-1, 1):
+            if board.pieces[white[0]][i] == 1 and board.pieces[white[0]][i+1] == 2 and board.check_legality(white[0], white[1], white[0], i-1):
                 moves_to_eat.append(white, [white[0], i-1])
         # Checking left
         for i in range(1, white[1]-1, 1):
-            if pieces[white[0]][i] == 1 and pieces[white[0]][i-1] == 2:
+            if board.pieces[white[0]][i] == 1 and board.pieces[white[0]][i-1] == 2 and board.check_legality(white[0], white[1], white[0], i+1):
                 moves_to_eat.append(white, [white[0], i+1])
         # Checking up
         for i in range(1, white[0]-1, 1):
-            if pieces[i][white[1]] == 1 and pieces[i-1][white[1]] == 2:
+            if board.pieces[i][white[1]] == 1 and board.pieces[i-1][white[1]] == 2 and board.check_legality(white[0], white[1], i+1, white[1]):
                 moves_to_eat.append(white, [i+1, white[1]])
         # Checking down
-        for i in range(white[0]+2, len(pieces)-1, 1):
-            if pieces[i][white[1]] == 1 and pieces[i+1][white[1]] == 2:
+        for i in range(white[0]+2, len(board.pieces)-1, 1):
+            if board.pieces[i][white[1]] == 1 and board.pieces[i+1][white[1]] == 2 and board.check_legality(white[0], white[1], i-1, white[1]):
                 moves_to_eat.append(white, [i-1, white[1]])
     return moves_to_eat

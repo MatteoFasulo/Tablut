@@ -136,26 +136,22 @@ class Board():
         return x1, y1, x2, y2
 
 
-    def __check_legality(self, x1,y1,x2,y2):
+    def check_legality(self, x1,y1,x2,y2):
         #Check for diagonal movement
         if not (x1 == x2 or y1 == y2):
-            print("NOT LEGAL DIAGONAL")
             return False
         
         #Check for Out of Bound movement
         if y2 >= 9 or x2 >= 9:
-            print("NOT LEGAL OUTOFBOUND")
             return False
 
         #Check if you are moving a piece
         if self.pieces[x1][y1] == 0:
-            print("NOT LEGAL NOTAPIECE")
 
             return False
 
         #Check if the destination square is already occupied
         if self.pieces[x2][y2] != 0:
-            print("NOT LEGAL ALREADYOCCUPIED")
 
             return False
         
@@ -164,36 +160,30 @@ class Board():
             if y1 < y2:
                 for i in range(y1+1,y2+1):
                     if self.pieces[x1][i] != 0:
-                        print("PATHNOTCLEAR 1")
 
                         return False
             else:
                 for i in range(y1-1,y2, -1):
                     if self.pieces[x1][i] != 0:
-                        print("PATHNOTCLEAR 2")
 
                         return False
         else:
             if x1 < x2:
                 for i in range(x1+1,x2+1):
                     if self.pieces[i][y1] != 0:
-                        print("PATHNOTCLEAR 3")
 
                         return False
             else:
                 for i in range(x1-1, x2, -1):
                     if self.pieces[i][y1] != 0:
-                        print("PATHNOTCLEAR 4")
 
                         return False
         
         #Check if moving into a barrack from outside
         if self.board[x1][y1] in [WHITE, WHITE2] and self.board[x2][y2] in [RED, RED2]:
-            print("NOT LEGAL ENTERINGABARRACK")
             return False
         #Check if moving into the castle
         if self.board[x1][y1] in [WHITE, WHITE2, RED, RED2, GREEN, GREEN2, GRAY] and self.board[x2][y2] == BLUE:
-            print("NOT LEAGL ENTERINGCASTLE")
             return False
         return True
     
@@ -306,3 +296,37 @@ class Board():
     def white_fitness(self, alpha0, beta0):
         return whiteheuristics.white_fitness(self.pieces, self.whites, alpha0, beta0)
 
+    def all_possible_moves(self, player):
+        moves = []
+        if player == "WHITE":
+            pawns = self.whites + [self.king]
+        elif player == "BLACK":
+            pawns = self.blacks
+        
+        for pawn in pawns:
+            #Check right moves
+            for i in range(pawn[1]+1, len(self.pieces)):
+                if self.check_legality(pawn[0], pawn[1], pawn[0], i):
+                    moves.append([pawn[0], pawn[1], pawn[0], i])
+
+            #Check left moves
+            for i in range(0, pawn[1]-1):
+                if self.check_legality(pawn[0], pawn[1], pawn[0], i):
+                    moves.append([pawn[0], pawn[1], pawn[0], i])
+
+            #Check top moves
+            for i in range(pawn[0]+1, len(self.pieces)):
+                if self.check_legality(pawn[0], pawn[1], i, pawn[1]):
+                    moves.append([pawn[0], pawn[1], i, pawn[1]])
+
+            #Check bottom moves
+            for i in range(0, pawn[0]-1):
+                if self.check_legality(pawn[0], pawn[1], i, pawn[1]):
+                    moves.append([pawn[0], pawn[1], i, pawn[1]])
+
+        return moves
+
+
+
+
+            
