@@ -45,6 +45,8 @@ class Board():
             [0,0,0,1,1,1,0,0,0],
         ]
 
+        self.king = [4,4]
+
         self.whites = [
             [2,4],
             [3,4],
