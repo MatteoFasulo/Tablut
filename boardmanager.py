@@ -303,6 +303,6 @@ class Board():
             return False
         
     
-    def white_fitness(self, alpha0, beta0):
-        return whiteheuristics.white_fitness(self.pieces, self.whites, alpha0, beta0)
+    def white_fitness(self, alpha0, beta0, gamma0):
+        return whiteheuristics.white_fitness(self.pieces, self.whites, self.king, alpha0, beta0, gamma0)
 

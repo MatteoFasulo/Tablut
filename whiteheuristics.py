@@ -1,6 +1,7 @@
 import boardmanager
 
-def white_fitness(pieces, whites,alpha0, beta0):
+#STATIC ANALYSIS (Gives the fitness of a STATIC board position)
+def white_fitness(pieces, whites,king, alpha0, beta0, gamma0):
         """
         Returns the float value of the current state of the board for white
         """
@@ -51,5 +52,34 @@ def white_fitness(pieces, whites,alpha0, beta0):
         #The castle is at [4,4]
         for white in whites:
             fitness += beta0 * ((white[0] - 4)**2 + (white[1] - 4)**2)**0.5
+
+        #TODO: implement the special capture rule
+        #King defence: If my king can be killed in the next move by the black player, apply a very strong negative fitness (static analysis)
+        xking, yking = king
+        if xking > 0:
+            if pieces[xking-1][yking] == 1:
+                #Check if there's a black piece that can kill the king on his RIGHT side
+                for x in range(xking+1, len(pieces)):
+                    if pieces[x][yking] == 1 and boardmanager._is_there_a_clear_view(king, [x, yking]):
+                        fitness += gamma0
+        if xking < len(pieces)-1:
+            if pieces[xking+1][yking] == 1:
+                #Check if there's a black piece that can kill the king on his LEFT side
+                for x in range(xking-1, -1, -1):
+                    if pieces[x][yking] == 1 and boardmanager._is_there_a_clear_view(king, [x, yking]):
+                        fitness += gamma0
+        if yking > 0:
+            if pieces[xking][yking-1] == 1:
+                #Check if there's a black piece that can kill the king on his TOP side
+                for y in range(yking+1, len(pieces)):
+                    if pieces[xking][y] == 1 and boardmanager._is_there_a_clear_view(king, [xking, y]):
+                        fitness += gamma0
+        if yking < len(pieces)-1:
+            if pieces[xking][yking+1] == 1:
+                #Check if there's a black piece that can kill the king on his TOP side
+                for y in range(yking-1, -1, -1):
+                    if pieces[xking][y] == 1 and boardmanager._is_there_a_clear_view(king, [xking, y]):
+                        fitness += gamma0
+
 
         return fitness
