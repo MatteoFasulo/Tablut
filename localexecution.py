@@ -14,7 +14,7 @@ def localrun(player_team : str, player_name : str, timelimit : int):
     """
 
     board = Board()
-    print(f"White heuristic: {board.white_fitness(-1,1)}")
+    print(f"White heuristic: {board.white_fitness(-1,1, -1000)}")
     board.print_board()
 
     while True:

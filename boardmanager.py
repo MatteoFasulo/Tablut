@@ -304,5 +304,5 @@ class Board():
         
     
     def white_fitness(self, alpha0, beta0, gamma0):
-        return whiteheuristics.white_fitness(self.pieces, self.whites, self.king, alpha0, beta0, gamma0)
+        return whiteheuristics.white_fitness(self, alpha0, beta0, gamma0)
 
