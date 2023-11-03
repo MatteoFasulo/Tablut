@@ -14,7 +14,12 @@ def localrun(player_team : str, player_name : str, timelimit : int):
     """
 
     board = Board()
-    print(f"White heuristic: {board.white_fitness(-1,1, -1000)}")
+
+
+    for move in board.all_possible_moves("WHITE"):
+        fit = 0
+        fit += board.white_fitness_dynamic(move) + board.white_fitness(move, -2, 1, -1000)
+        print(move, fit)
     board.print_board()
 
     while True:

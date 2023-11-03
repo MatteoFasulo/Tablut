@@ -87,51 +87,25 @@ def white_fitness(board, alpha0, beta0, gamma0):
 
 
 
-# TODO: implement the dynamic analysis logic
-# If I can eat a black piece, I have to do it
-# TODO: Does the king eat? If so, remember to put [] when concatenation with whites
-# What should I do with these moves?
-def eat_black(board):
-    '''
-    If a black piece can be eaten it returns a list of initial and final position of the white piece that eats
-    '''
-    moves_to_eat = []
-    for white in board.whites:
-        # Checking right
-        for i in range(white[1]+2, len(board.pieces)-1, 1):
-            if board.pieces[white[0]][i] == 1 and board.pieces[white[0]][i+1] == 2 and board.check_legality(white[0], white[1], white[0], i-1):
-                moves_to_eat.append(white, [white[0], i-1])
-        # Checking left
-        for i in range(1, white[1]-1, 1):
-            if board.pieces[white[0]][i] == 1 and board.pieces[white[0]][i-1] == 2 and board.check_legality(white[0], white[1], white[0], i+1):
-                moves_to_eat.append(white, [white[0], i+1])
-        # Checking up
-        for i in range(1, white[0]-1, 1):
-            if board.pieces[i][white[1]] == 1 and board.pieces[i-1][white[1]] == 2 and board.check_legality(white[0], white[1], i+1, white[1]):
-                moves_to_eat.append(white, [i+1, white[1]])
-        # Checking down
-        for i in range(white[0]+2, len(board.pieces)-1, 1):
-            if board.pieces[i][white[1]] == 1 and board.pieces[i+1][white[1]] == 2 and board.check_legality(white[0], white[1], i-1, white[1]):
-                moves_to_eat.append(white, [i-1, white[1]])
-    return moves_to_eat
+
 
 
 
 #DYNAMIC ANALYSIS (analyze a move given in input)
-def white_fitness_dynamic(board : boardmanager, move : str, piece : int):
+def white_fitness_dynamic(board : boardmanager, move : str, piece : int, alpha0):
     assert piece in [1,2,3], "piece should be 1 (black), 2(white) or 3(king)"
     """
-    move must be written in the notation XY-XY, for example A1-A3 and must be a legal move (no check for legality)
+    move must be written in the notation (x1,y1,x2,y2)
     the board must be in the state BEFORE the move
     piece is the piece that has been moved (1 black, 2 white, 3 king)
     """
-    x1,y1,x2,y2 = board._convert_move(move)
+    x1,y1,x2,y2 = move
     local_pieces = copy.deepcopy(board.pieces)
     local_pieces[x2][y2] = local_pieces[x1][y1]
     local_pieces[x1][y1] = 0
 
     if piece == 1:
-        local_whites = copy(board.whites)
+        local_whites = copy.deepcopy(board.whites)
         #DO NOT CHANGE local_black and local_king SINCE THEY ARE REFERRING TO THE ACTUAL BOARD, THEY ARE READ ONLY
         local_black = board.blacks
         local_king = board.king
@@ -141,7 +115,7 @@ def white_fitness_dynamic(board : boardmanager, move : str, piece : int):
                 break
     elif piece == 2:
         local_whites = board.whites
-        local_black = copy(board.blacks)
+        local_black = copy.deepcopy(board.blacks)
         local_king = board.king
         for black in local_black:
             if black[0] == x1 and black[1] == y1:
@@ -150,8 +124,12 @@ def white_fitness_dynamic(board : boardmanager, move : str, piece : int):
     else:
         local_whites = board.whites
         local_black = board.blacks
-        local_king = copy(board.king)
+        local_king = copy.deepcopy(board.king)
         local_king = [x2,y2]
 
+    fitness = 0
     #Use only the local_XXXX variables in a read only way
-        
+    if move in board.white_moves_to_eat:
+        fitness += alpha0
+
+    return fitness

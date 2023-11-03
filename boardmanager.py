@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import whiteheuristics
+import copy
 
 ######## COSTANTS ########
 GRAY = (150,150,150)
@@ -77,6 +78,10 @@ class Board():
             [8,4],
             [8,5]
         ]
+
+        self.white_moves_to_eat = []
+
+        self.eat_black()
 
     def reset_board(self):
         """
@@ -275,6 +280,8 @@ class Board():
             self.__check_attacks(x2,y2)
         else:
             raise BadMoveException(f"Your move {move} is not legal")
+    
+        self.eat_black()
         
     def _is_there_a_clear_view(self,piece1,piece2):
         if piece1[0] == piece2[0]:
@@ -292,9 +299,36 @@ class Board():
         else:
             return False
         
+    #FIXME: Controllare che non usi troppa memoria
+    def white_fitness(self, move, alpha0, beta0, gamma0):
+        tmp_board = Board()
+        tmp_board.pieces = copy.deepcopy(self.pieces)
+        tmp_board.blacks = copy.deepcopy(self.blacks)
+        tmp_board.whites = copy.deepcopy(self.whites)
+        tmp_board.king = copy.deepcopy(self.king)
+
+        tmp_board.pieces[move[2]][move[3]] = tmp_board.pieces[move[0]][move[1]]
+        tmp_board.pieces[move[0]][move[1]] = 0
+
+        if tmp_board.pieces[move[2]][move[3]] == 1:
+            for black in tmp_board.blacks:
+                if black[0] == move[0] and black[1] == move[1]:
+                    black[0] = move[2]
+                    black[0] = move[3]
+        elif tmp_board.pieces[move[2]][move[3]] == 2:
+            for white in tmp_board.whites:
+                if white[0] == move[0] and white[1] == move[1]:
+                    white[0] = move[2]
+                    white[0] = move[3]
+        else:
+            tmp_board.king = [move[2], move[3]]
+
+
+        return whiteheuristics.white_fitness(tmp_board, alpha0, beta0, gamma0)
     
-    def white_fitness(self, alpha0, beta0, gamma0):
-        return whiteheuristics.white_fitness(self, alpha0, beta0, gamma0)
+    def white_fitness_dynamic(self, move):
+        piece = self.pieces[move[0]][move[1]]
+        return whiteheuristics.white_fitness_dynamic(self, move, piece, alpha0=2)
 
     def all_possible_moves(self, player):
         moves = []
@@ -325,6 +359,36 @@ class Board():
                     moves.append([pawn[0], pawn[1], i, pawn[1]])
 
         return moves
+    
+
+    # TODO: implement the dynamic analysis logic
+    # If I can eat a black piece, I have to do it
+    # TODO: Does the king eat? If so, remember to put [] when concatenation with whites
+    # TODO: Special capture rules
+    def eat_black(self):
+        '''
+        If a black piece can be eaten it returns a list of initial and final position of the white piece that eats
+        '''
+        moves_to_eat = []
+        for white in self.whites:
+            # Checking right
+            for i in range(white[1]+2, len(self.pieces)-1, 1):
+                if self.pieces[white[0]][i] == 1 and self.pieces[white[0]][i+1] == 2 and self.check_legality(white[0], white[1], white[0], i-1):
+                    moves_to_eat.append(white, [white[0], i-1])
+            # Checking left
+            for i in range(1, white[1]-1, 1):
+                if self.pieces[white[0]][i] == 1 and self.pieces[white[0]][i-1] == 2 and self.check_legality(white[0], white[1], white[0], i+1):
+                    moves_to_eat.append(white, [white[0], i+1])
+            # Checking up
+            for i in range(1, white[0]-1, 1):
+                if self.pieces[i][white[1]] == 1 and self.pieces[i-1][white[1]] == 2 and self.check_legality(white[0], white[1], i+1, white[1]):
+                    moves_to_eat.append(white, [i+1, white[1]])
+            # Checking down
+            for i in range(white[0]+2, len(self.pieces)-1, 1):
+                if self.pieces[i][white[1]] == 1 and self.pieces[i+1][white[1]] == 2 and self.check_legality(white[0], white[1], i-1, white[1]):
+                    moves_to_eat.append(white, [i-1, white[1]])
+
+        self.white_moves_to_eat = moves_to_eat
 
 
 
