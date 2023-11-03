@@ -270,7 +270,6 @@ class Board():
         if self.__check_legality(x1,y1,x2,y2):
             self.pieces[x2][y2] = self.pieces[x1][y1]
             self.pieces[x1][y1] = 0 
-            #TODO: make this works for blacks too
             for p in self.whites:
                 if p[0] == x1 and p[1] == y1:
                     p[0] = x2
