@@ -30,6 +30,7 @@ class Pawn(Enum):
     KING = 3
 
 class Converter:
+    # TODO convert matrix to json check if it works and if it's needed
     def json_to_matrix(self, json_state):
         data = json.loads(json_state)
         array = np.array(data, dtype = object)
