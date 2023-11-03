@@ -14,11 +14,7 @@ def localrun(player_team : str, player_name : str, timelimit : int):
     """
 
     board = Board()
-    print(f"White heuristic: {board.white_fitness(-1,1)}")
-    heuristic = []
-    for move in board.all_possible_moves("WHITE"):
-        #TODO: complete with the computed heuristic for the move
-        heuristic.append((move, ))
+    print(f"White heuristic: {board.white_fitness(-1,1, -1000)}")
     board.print_board()
 
     while True:
@@ -28,6 +24,6 @@ def localrun(player_team : str, player_name : str, timelimit : int):
         except BadMoveException as e:
             print(e)
         
-        print(f"White heuristic: {board.white_fitness(-2,1)}")
+        print(f"White heuristic: {board.white_fitness(-2,1,-1000)}")
 
         board.print_board()
