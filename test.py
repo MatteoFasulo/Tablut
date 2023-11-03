@@ -2,13 +2,16 @@ from aima.games import Game, GameState, GameNode, GameTree, Minimax, AlphaBetaPr
     MinimaxDecision, AlphaBetaDecision, MonteCarloTreeSearchDecision, ExpectimaxDecision 
 
 import copy
+from utils import Utils
+from boardmanager import Board
 
 class TablutPlayer(Game):
     """
     Tablut player
     """
     def __init__(self, player, timeout, initial_board, king_position = [4,4]):
-        self.initial = GameState(to_move=player, utility=, board=, moves=get_moves(board, player))
+        self.utils = Utils(initial_board)
+        self.initial = GameState(to_move=player, utility=self.utils.evalutate_utility(initial_board, initial_board), board=initial_board, moves=get_moves(board, player))
         self.timeout = timeout
 
     # AIMA Methods
@@ -18,7 +21,7 @@ class TablutPlayer(Game):
         """
         player = state.to_move
         board = copy.deepcopy(state.board)
-        return self.white_logic(board) if player == "WHITE" else self.black_logic(board)
+        return self.utils.white_logic(board) if player == "WHITE" else self.utils.black_logic(board)
     
     def result(self, state, move):
         """
@@ -27,10 +30,14 @@ class TablutPlayer(Game):
         board = copy.deepcopy(state.board)
         old_board = copy.deepcopy(state.board)
         player = state.to_move
-        # fare la mossa
-        player = ("BLACK" if player == "WHITE" else "WHITE")
 
-        return GameState(to_move=player, utility=, board=board, moves=get_moves(board, player))
+        # make move
+        board.move(move)
+
+        # swap player
+        player = ("BLACK" if player == "WHITE" else player)
+
+        return GameState(to_move=player, utility=self.utils.evalutate_utility(old_board, board), board=board, moves=get_moves(board, player))
 
     
     def utility(self, state, player):
@@ -51,4 +58,4 @@ class TablutPlayer(Game):
         """
         Get all moves for a specific player
         """
-        return self.white_logic(board) if player == "WHITE" else self.black_logic(board)
+        return self.utils.white_logic(board) if player == "WHITE" else self.utils.black_logic(board)
