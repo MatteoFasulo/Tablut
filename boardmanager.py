@@ -261,7 +261,6 @@ class Board():
 
 
     def move(self, move):
-        #TODO: aggiornare self.whites e self.blacks di conseguenza
         """
         Moves a piece on the board
             Parameters:
@@ -277,6 +276,13 @@ class Board():
                     p[0] = x2
                     p[1] = y2
                     break
+            for p in self.blacks:
+                if p[0] == x1 and p[1] == y1:
+                    p[0] = x2
+                    p[1] = y2
+                    break
+            if self.king[0] == x1 and self.king[1] == y1:
+                self.king = [x2,y2]
             self.__check_attacks(x2,y2)
         else:
             raise BadMoveException(f"Your move {move} is not legal")
