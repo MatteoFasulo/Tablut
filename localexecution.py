@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 from boardmanager import Board, BadMoveException
 
 def localrun(player_team : str, player_name : str, timelimit : int):
@@ -39,7 +40,7 @@ def localrun(player_team : str, player_name : str, timelimit : int):
     #print(mvstr, L[0][1])
     board.move(mvstr)
 
-    board.print_board()
+    fig, _ = board.print_board()
 
     while True:
         move = input("Fai una mossa: ")
@@ -62,4 +63,9 @@ def localrun(player_team : str, player_name : str, timelimit : int):
 
         #print(mvstr, L[0][1])
 
-        board.print_board()
+        try:
+            plt.close(fig) # TODO transform this into a generator (or dynamic update of the window) https://www.geeksforgeeks.org/how-to-update-a-plot-on-same-figure-during-the-loop/
+        except:
+            pass
+
+        fig, _ = board.print_board()

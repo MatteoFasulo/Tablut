@@ -3,8 +3,11 @@ import argparse
 from aima.games import random_player, alpha_beta_search, GameState
 
 from player import TablutPlayer
+from utils import Utils
 from utils import Network
 from argList import argList
+
+import copy
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Play a game of TABLUT')
@@ -23,7 +26,7 @@ if __name__ == "__main__":
     tp = TablutPlayer(args.team, args.timelimit, board)
 
     print("\nInitial State:")
-    print(board)
+    board.print_board()
 
     # Game Loop
     old_board = copy.deepcopy(board)
@@ -31,7 +34,7 @@ if __name__ == "__main__":
     i = 0
 
     while not goal:
-        state = GameState(to_move=args.team, utility=tp.utility.evalutate_utility(old_board, board), board=board, moves=board.all_possible_moves(args.team))
+        state = GameState(to_move=args.team, utility=Utils().evalutate_utility(board, ), board=board, moves=board.all_possible_moves(args.team))
 
         move = alpha_beta_search(state, tp, d=4) # TODO change d (depth)
         print(move)
@@ -45,8 +48,8 @@ if __name__ == "__main__":
 
         # Summary
         print(f"\nMy {i}° move: {move}")
-        print(board) # TODO print board with board.print_board
+        board.print_board()
         print("\nWaiting for the opponent...")
         board, turn, goal = network.get_state()
         print(f"\nOpponent's {i}° move: {move}")
-        print(board) # TODO print board with board.print_board
+        board.print_board()

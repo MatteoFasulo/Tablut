@@ -109,9 +109,13 @@ class Board():
         ax.set_yticks([0,1,2,3,4,5,6,7,8])
         ax.set_xticklabels(['A','B','C','D','E','F','G','H','I'])
         ax.set_yticklabels(['1','2','3','4','5','6','7','8','9'])
-        plt.show()
+        plt.show(block=False)
+        return fig, ax
 
     def _convert_move(self, move):
+        if not isinstance(move, str):
+            return move
+            
         chars = ["A", "B", "C", "D", "E", "F", "G", "H", "I"]
         x1 = None
         y1 = None
