@@ -32,7 +32,7 @@ class Pawn(Enum):
 class Converter:
     # TODO convert matrix to json check if it works and if it's needed
     def json_to_matrix(self, json_state):
-        data = json.loads(json_state)
+        data = list(json_state.items())
         array = np.array(data, dtype = object)
 
         board = np.array(array[0, 1], dtype = object)
@@ -41,13 +41,13 @@ class Converter:
         state = np.zeros((9,9), dtype = Pawn)
         for i in range(0,9):
             for j in range (0,9):
-                if board_array[i,j] == 'EMPTY':
+                if board[i,j] == 'EMPTY':
                     state[i,j] = Pawn.EMPTY.value
-                elif board_array[i,j] == 'WHITE':
+                elif board[i,j] == 'WHITE':
                     state[i,j] = Pawn.WHITE.value
-                elif board_array[i,j] == 'BLACK':
+                elif board[i,j] == 'BLACK':
                     state[i,j] = Pawn.BLACK.value
-                elif board_array[i,j] == 'KING':
+                elif board[i,j] == 'KING':
                     state[i,j] = Pawn.KING.value
                     king_position = (i,j)
 
@@ -74,7 +74,7 @@ class Network:
         # Helper function to recv n bytes or return None if EOF is hit
         data = b''
         while len(data) < n:
-            packet = sock.recv(n - len(data))
+            packet = self.sock.recv(n - len(data))
             if not packet:
                 return None
             data += packet
