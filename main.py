@@ -33,7 +33,7 @@ if __name__ == "__main__":
     while not goal:
         state = GameState(to_move=args.team, utility=tp.utility.evalutate_utility(old_board, board), board=board, moves=board.all_possible_moves(args.team))
 
-        move = alphabeta_search(state, tp, d=4) # TODO change d (depth)
+        move = alpha_beta_search(state, tp, d=4) # TODO change d (depth)
         print(move)
 
         move = network.send_move(move)
