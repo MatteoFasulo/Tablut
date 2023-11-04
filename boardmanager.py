@@ -81,7 +81,6 @@ class Board():
 
         self.white_moves_to_eat = []
 
-        self.eat_black()
 
     def reset_board(self):
         """
@@ -262,7 +261,7 @@ class Board():
                 move (str): a string representing the move, for example "A3-B3"
         """
         x1,y1,x2,y2 = self._convert_move(move)
-        if self.__check_legality(x1,y1,x2,y2):
+        if self.check_legality(x1,y1,x2,y2):
             self.pieces[x2][y2] = self.pieces[x1][y1]
             self.pieces[x1][y1] = 0 
             for p in self.whites:
@@ -328,7 +327,7 @@ class Board():
     
     def white_fitness_dynamic(self, move):
         piece = self.pieces[move[0]][move[1]]
-        return whiteheuristics.white_fitness_dynamic(self, move, piece, alpha0=2)
+        return whiteheuristics.white_fitness_dynamic(self, move, piece, alpha0=10000)
 
     def all_possible_moves(self, player):
         moves = []
@@ -344,7 +343,7 @@ class Board():
                     moves.append([pawn[0], pawn[1], pawn[0], i])
 
             #Check left moves
-            for i in range(0, pawn[1]-1):
+            for i in range(0, pawn[1]):
                 if self.check_legality(pawn[0], pawn[1], pawn[0], i):
                     moves.append([pawn[0], pawn[1], pawn[0], i])
 
@@ -354,7 +353,7 @@ class Board():
                     moves.append([pawn[0], pawn[1], i, pawn[1]])
 
             #Check bottom moves
-            for i in range(0, pawn[0]-1):
+            for i in range(0, pawn[0]):
                 if self.check_legality(pawn[0], pawn[1], i, pawn[1]):
                     moves.append([pawn[0], pawn[1], i, pawn[1]])
 
@@ -369,24 +368,60 @@ class Board():
         '''
         If a black piece can be eaten it returns a list of initial and final position of the white piece that eats
         '''
+        #TODO: manage possible exception
+        #TODO: If a piece can capture more than one enemy in a move, give more fitness to that move
         moves_to_eat = []
         for white in self.whites:
             # Checking right
-            for i in range(white[1]+2, len(self.pieces)-1, 1):
+            for i in range(white[1]+1, len(self.pieces)-1, 1):
+                try:
+                    if self.pieces[white[0]+1][i] == 1 and self.pieces[white[0]+2][i] == 2 and self.check_legality(white[0],white[1], white[0], i):
+                        moves_to_eat.append([white[0],white[1], white[0], i])
+                    if self.pieces[white[0]-1][i] == 1 and self.pieces[white[0]-2][i] == 2 and self.check_legality(white[0],white[1], white[0], i):
+                        moves_to_eat.append([white[0],white[1], white[0], i]) 
+                except:
+                    pass
                 if self.pieces[white[0]][i] == 1 and self.pieces[white[0]][i+1] == 2 and self.check_legality(white[0], white[1], white[0], i-1):
-                    moves_to_eat.append(white, [white[0], i-1])
+                    moves_to_eat.append([white[0], white[1], white[0], i-1])
+                    break
             # Checking left
-            for i in range(1, white[1]-1, 1):
+            for i in range(0, white[1]):
+                try:
+                    if self.pieces[white[0]+1][i] == 1 and self.pieces[white[0]+2][i] == 2 and self.check_legality(white[0],white[1], white[0], i):
+                        moves_to_eat.append([white[0],white[1], white[0], i])
+                    if self.pieces[white[0]-1][i] == 1 and self.pieces[white[0]-2][i] == 2 and self.check_legality(white[0],white[1], white[0], i):
+                        moves_to_eat.append([white[0],white[1], white[0], i]) 
+                except:
+                    pass
                 if self.pieces[white[0]][i] == 1 and self.pieces[white[0]][i-1] == 2 and self.check_legality(white[0], white[1], white[0], i+1):
-                    moves_to_eat.append(white, [white[0], i+1])
+                    moves_to_eat.append([white[0], white[1], i+1])
+                    break
             # Checking up
-            for i in range(1, white[0]-1, 1):
+            for i in range(0, white[0]):
+                try:
+                    if self.pieces[i][white[1]+1] == 1 and self.pieces[i][white[1]+2] == 2 and self.check_legality(white[0],white[1], i, white[1]):
+                        moves_to_eat.append([white[0],white[1], i, white[1]])
+                    if self.pieces[i][white[1]-1] == 1 and self.pieces[i][white[1]-2] == 2 and self.check_legality(white[0],white[1], i, white[1]):
+                        moves_to_eat.append([white[0],white[1], i, white[1]]) 
+                except:
+                    pass
                 if self.pieces[i][white[1]] == 1 and self.pieces[i-1][white[1]] == 2 and self.check_legality(white[0], white[1], i+1, white[1]):
-                    moves_to_eat.append(white, [i+1, white[1]])
+                    moves_to_eat.append([white[0], white[1], i+1, white[1]])
+                    break
             # Checking down
-            for i in range(white[0]+2, len(self.pieces)-1, 1):
+            for i in range(white[0]+1, len(self.pieces)-1, 1):
+                try:
+                    if self.pieces[i][white[1]+1] == 1 and self.pieces[i][white[1]+2] == 2 and self.check_legality(white[0],white[1], i, white[1]):
+                        moves_to_eat.append([white[0],white[1], i, white[1]])
+                    if self.pieces[i][white[1]-1] == 1 and self.pieces[i][white[1]-2] == 2 and self.check_legality(white[0],white[1], i, white[1]):
+                        moves_to_eat.append([white[0],white[1], i, white[1]]) 
+                except:
+                    pass
                 if self.pieces[i][white[1]] == 1 and self.pieces[i+1][white[1]] == 2 and self.check_legality(white[0], white[1], i-1, white[1]):
-                    moves_to_eat.append(white, [i-1, white[1]])
+                    moves_to_eat.append([white[0], white[1], i-1, white[1]])
+                    break
+
+
 
         self.white_moves_to_eat = moves_to_eat
 

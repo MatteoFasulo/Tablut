@@ -15,11 +15,30 @@ def localrun(player_team : str, player_name : str, timelimit : int):
 
     board = Board()
 
+    conv = {
+        0 : "A",
+        1 : "B",
+        2 : "C",
+        3 : "D",
+        4 : "E",
+        5 : "F",
+        6 : "G",
+        7 : "H",
+        8 : "I"
+    }
 
+    L = []
     for move in board.all_possible_moves("WHITE"):
         fit = 0
-        fit += board.white_fitness_dynamic(move) + board.white_fitness(move, -2, 1, -1000)
-        print(move, fit)
+        fit += board.white_fitness_dynamic(move) + board.white_fitness(move, -5, 0.01, -1000)
+        L.append((move, fit))
+    L = sorted(L, key= lambda x: x[1], reverse=True)
+    mv = L[0][0]
+    mvstr = f"{conv[mv[1]]}{mv[0]+1}-{conv[mv[3]]}{mv[2]+1}"
+    #print(board.white_moves_to_eat)
+    #print(mvstr, L[0][1])
+    board.move(mvstr)
+
     board.print_board()
 
     while True:
@@ -29,6 +48,18 @@ def localrun(player_team : str, player_name : str, timelimit : int):
         except BadMoveException as e:
             print(e)
         
-        print(f"White heuristic: {board.white_fitness(-2,1,-1000)}")
+
+        L = []
+        for move in board.all_possible_moves("WHITE"):
+            fit = 0
+            fit += board.white_fitness_dynamic(move) + board.white_fitness(move, -5, 0.01, -1000)
+            L.append((move, fit))
+        L = sorted(L, key= lambda x: x[1], reverse=True)
+        mv = L[0][0]
+        mvstr = f"{conv[mv[0]]}{mv[1]+1}-{conv[mv[2]]}{mv[3]+1}"
+        print(mvstr)
+        board.move(mvstr)
+
+        #print(mvstr, L[0][1])
 
         board.print_board()
