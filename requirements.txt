@@ -1,1 +1,3 @@
 aima
+matplotlib
+numpy
