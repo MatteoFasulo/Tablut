@@ -430,6 +430,75 @@ class Board():
         self.white_moves_to_eat = moves_to_eat
 
 
+    def moves_to_eat_king(self):
+        if self.king == [4,4]:
+            self.black_moves_to_eat_king = self.eat_king_in_castle()
+        else:
+            self.black_moves_to_eat_king = self.eat_king_outside_castle()
 
 
-            
+    def eat_king_in_castle(self):
+        '''
+        You should check if the king is in the castle before calling this function
+        It returns starting and ending position of the piece that can eat the king, otherwise it returns [-1,-1], [-1,-1]
+        '''
+        position = self.check_sourrounded_king_castle()
+        if position == [-1,-1]:
+            return position + position
+        for black in self.blacks:
+            if self.check_legality(black[0], black[1], position[0], position[1]):
+                return black, position
+        return [[-1,-1], [-1,-1]]
+
+
+
+    def check_sourrounded_king_castle(self):
+        '''
+        It returns the coordinates of one of the four tiles around the king, if the other three are occupied by three blacks
+        It returns [-1,-1] if the king is not sorrounded or he's not in the castle
+        '''
+        if self.pieces[4][3] == 1 and self.pieces[3][4] == 1 and self.pieces[4][5] == 1:
+            return [5,4]
+        if self.pieces[4][3] == 1 and self.pieces[5][4] == 1 and self.pieces[4][5] == 1:
+            return [3,4]
+        if self.pieces[5][4] == 1 and self.pieces[3][4] == 1 and self.pieces[4][5] == 1:
+            return [4,3]
+        if self.pieces[4][3] == 1 and self.pieces[3][4] == 1 and self.pieces[5][4] == 1:
+            return [4,5]
+        return [-1,-1]
+
+
+
+    def check_sourrounded_king_outside(self):
+        '''
+        It returns a list of possible moves to eat the king, when he's outside the castle
+        If there isn't any feasable move, it returns [-1,-1]
+        '''
+        r, c = self.king
+        tiles = []
+        if self.pieces[r][c-1] == 1:
+            tiles.append([r, c+1])
+        elif self.pieces[r][c+1] == 1:
+            tiles.append([r, c-1])
+        if self.pieces[r-1][c] == 1:
+            tiles.append([r+1][c])
+        elif self.pieces[r+1][c] == 1:
+            tiles.append([r-1][c])
+        return tiles if len(tiles) > 0 else [-1,-1]
+
+
+
+    def eat_king_outside_castle(self):
+        '''
+        You should check if the king is not in the castle before calling this function
+        It returns starting and ending position of the piece that can eat the king, otherwise it returns [[-1,-1], [-1,-1]]
+        '''
+        position = self.check_sourrounded_king_outside()
+        if position == [-1,-1]:
+            return position + position
+        for black in self.blacks:
+            if self.check_legality(black[0], black[1], position[0][0], position[0][1]):
+                return [black, [position[0][0], position[0][1]]]
+            if len(position) == 2 and self.check_legality(black[0], black[1], position[1][0], position[1][1]):
+                return [black, [position[1][0], position[1][1]]]
+        return [[-1,-1], [-1,-1]]        
