@@ -431,6 +431,10 @@ class Board():
 
 
     def moves_to_eat_king(self):
+        '''
+        If the king can be eaten, self.black_moves_to_eat_king is set to a list of initial and final position of the white piece that eats
+        Otherwise, self.black_moves_to_eat_king is set to [[-1,-1], [-1,-1]]
+        '''
         if self.king == [4,4]:
             self.black_moves_to_eat_king = self.eat_king_in_castle()
         else:
@@ -439,12 +443,11 @@ class Board():
 
     def eat_king_in_castle(self):
         '''
-        You should check if the king is in the castle before calling this function
         It returns starting and ending position of the piece that can eat the king, otherwise it returns [-1,-1], [-1,-1]
         '''
         position = self.check_sourrounded_king_castle()
         if position == [-1,-1]:
-            return position + position
+            return [[-1,-1], [-1,-1]]
         for black in self.blacks:
             if self.check_legality(black[0], black[1], position[0], position[1]):
                 return black, position
@@ -490,12 +493,11 @@ class Board():
 
     def eat_king_outside_castle(self):
         '''
-        You should check if the king is not in the castle before calling this function
         It returns starting and ending position of the piece that can eat the king, otherwise it returns [[-1,-1], [-1,-1]]
         '''
         position = self.check_sourrounded_king_outside()
         if position == [-1,-1]:
-            return position + position
+            return [[-1,-1], [-1,-1]]
         for black in self.blacks:
             if self.check_legality(black[0], black[1], position[0][0], position[0][1]):
                 return [black, [position[0][0], position[0][1]]]

@@ -10,10 +10,11 @@ def black_fitness_dynamic(board : boardmanager, move : str, piece : int, alpha0,
     the board must be in the state BEFORE the move
     piece is the piece that has been moved (1 black, 2 white, 3 king)
     """
+    fitness = 0
     x1,y1,x2,y2 = move
-    x1_eat_king, x2_eat_king, y1_eat_king, y2_eat_king = board.board.black_eat_king
+    x1_eat_king, x2_eat_king, y1_eat_king, y2_eat_king = board.black_moves_to_eat_king
 
     if x1 == x1_eat_king and x2 == x2_eat_king and y1 == y1_eat_king and y2 == y2_eat_king:
-        fitness += alpha0
+        fitness += alpha0 # alpha0 should be high because this move makes black win
 
     return fitness
