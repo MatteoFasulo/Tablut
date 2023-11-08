@@ -41,10 +41,6 @@ def localrun(player_team : str, player_name : str, timelimit : int):
     L = sorted(L, key= lambda x: x[1], reverse=True)
     mv = L[0][0]
     mvstr = f"{conv[mv[1]]}{mv[0]+1}-{conv[mv[3]]}{mv[2]+1}"
-
-    for m in L:
-        print(m)
-    print(mvstr, L[0][1])
     board.move(mvstr)
 
     fig, _ = board.print_board()
