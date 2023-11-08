@@ -1,0 +1,10 @@
+Tris 3*3 alpha beta, cutoff cache, cutoff depth 2:
+Time: 20ms
+Tris 3*3 alpha beta, cutoff cache, cutoff depth 4:
+Time: 50ms
+Tris 3*3 alpha beta, cutoff cache, cutoff depth 6:
+Time: 162ms
+Tris 3*3 alpha beta, cutoff cache, cutoff depth 8:
+Time: 200ms
+Tris 3*3 alpha beta, cutoff cache, cutoff depth 10:
+Time: 225ms

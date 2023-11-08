@@ -36,6 +36,36 @@ def white_fitness(board, alpha0, beta0, gamma0, theta0):
                 if board._is_there_a_clear_view(white, [white[0],i]):
                     fitness += alpha0
                     break
+                
+    #King Distance: 
+    #Calculate the fastest path out for the king
+    #Calculate the number of black pieces in each quadrant
+    #The more black pieces there are in the quadrant, the lower the fitness
+    #TODO: fix the fitness number and the beta0 value
+    if board.king[0] > 4 and board.king[1] > 4:
+        #King is in the bottom right quadrant
+        bp = board.check_num_pieces_in_quadrant(1,1)
+        fitness += beta0 * 1-(bp*0.2)
+    if board.king[0] > 4 and board.king[1] < 4:
+        #King is in the bottom left quadrant
+        bp = board.check_num_pieces_in_quadrant(3,1)
+        fitness += beta0 * 1-(bp*0.2)
+    if board.king[0] < 4 and board.king[1] > 4:
+        #King is in the top right quadrant
+        bp = board.check_num_pieces_in_quadrant(2,1)
+        fitness += beta0 * 1-(bp*0.2)
+    if board.king[0] < 4 and board.king[1] < 4:
+        #King is in the top left quadrant
+        bp = board.check_num_pieces_in_quadrant(4,1)
+        fitness += beta0 * 1-(bp*0.2)
+
+    if board.king[0] != 4 and board.king[1] != 4:
+        if board._is_there_a_clear_view(board.king, [board.king[0],0]) or \
+        board._is_there_a_clear_view(board.king, [board.king[0],len(board.pieces)-1]) or\
+        board._is_there_a_clear_view(board.king, [0,board.king[1]]) or \
+        board._is_there_a_clear_view(board.king, [len(board.pieces)-1,board.king[1]]):
+            fitness += 1000 #Maximum value of heuristic
+
     #"Pedoni esterna euristica più alta"
     #Since the fitness is computed on a static board, and not on a move, I have to count the number of pieces _far_ from the castle. The further they are as a whole, the higher the fitness
     #Consider concetric circles around the castle, the pieces that are in a circle further increase the fitness
