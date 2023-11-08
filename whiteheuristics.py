@@ -80,10 +80,6 @@ def white_fitness(board, alpha0, beta0, gamma0, theta0):
 
 
 
-
-
-
-
 #DYNAMIC ANALYSIS (analyze a move given in input)
 def white_fitness_dynamic(board : boardmanager, move : str, piece : int, alpha0, beta0, gamma0):
     assert piece in [1,2,3], "piece should be 1 (black), 2(white) or 3(king)"
