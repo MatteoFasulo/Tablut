@@ -28,16 +28,19 @@ def localrun(player_team : str, player_name : str, timelimit : int):
         8 : "I"
     }
 
+    alpha0 = -5
+    beta0 = 0.01
+    gamma0 = -1000
+    theta0 = 2
+
     L = []
     for move in board.all_possible_moves("WHITE"):
         fit = 0
-        fit += board.white_fitness_dynamic(move) + board.white_fitness(move, -5, 0.01, -1000)
+        fit += board.white_fitness_dynamic(move) + board.white_fitness(move, alpha0, beta0, gamma0, theta0)
         L.append((move, fit))
     L = sorted(L, key= lambda x: x[1], reverse=True)
     mv = L[0][0]
     mvstr = f"{conv[mv[1]]}{mv[0]+1}-{conv[mv[3]]}{mv[2]+1}"
-    #print(board.white_moves_to_eat)
-    #print(mvstr, L[0][1])
     board.move(mvstr)
 
     fig, _ = board.print_board()
@@ -53,7 +56,7 @@ def localrun(player_team : str, player_name : str, timelimit : int):
         L = []
         for move in board.all_possible_moves("WHITE"):
             fit = 0
-            fit += board.white_fitness_dynamic(move) + board.white_fitness(move, -5, 0.01, -1000)
+            fit += board.white_fitness_dynamic(move) + board.white_fitness(move, alpha0, beta0, gamma0, theta0)
             L.append((move, fit))
         L = sorted(L, key= lambda x: x[1], reverse=True)
         mv = L[0][0]

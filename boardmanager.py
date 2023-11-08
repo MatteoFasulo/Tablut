@@ -18,7 +18,7 @@ class BadMoveException(Exception):
         super().__init__(msg)
 
 class Board():
-    def __init__(self):
+    def __init__(self, pieces= None, white= None, black= None, king=None):
         """
         Instances a board
         """
@@ -34,50 +34,62 @@ class Board():
             [WHITE, WHITE2, WHITE, WHITE2, RED2, WHITE2, WHITE, WHITE2, WHITE],
             [GRAY, WHITE, WHITE2, RED2, RED, RED2, WHITE2, WHITE, GRAY],
         ]
+        if pieces == None:
         #This list of lists is the pieces, 0 is an empty square, 1 is a black piece, 2 is a white piece and 3 is the king
-        self.pieces = [
-            [0,0,0,1,1,1,0,0,0],
-            [0,0,0,0,1,0,0,0,0],
-            [0,0,0,0,2,0,0,0,0],
-            [1,0,0,0,2,0,0,0,1],
-            [1,1,2,2,3,2,2,1,1],
-            [1,0,0,0,2,0,0,0,1],
-            [0,0,0,0,2,0,0,0,0],
-            [0,0,0,0,1,0,0,0,0],
-            [0,0,0,1,1,1,0,0,0],
-        ]
+            self.pieces = [
+                [0,0,0,1,1,1,0,0,0],
+                [0,0,0,0,1,0,0,0,0],
+                [0,0,0,0,2,0,0,0,0],
+                [1,0,0,0,2,0,0,0,1],
+                [1,1,2,2,3,2,2,1,1],
+                [1,0,0,0,2,0,0,0,1],
+                [0,0,0,0,2,0,0,0,0],
+                [0,0,0,0,1,0,0,0,0],
+                [0,0,0,1,1,1,0,0,0],
+            ]
+        else:
+            self.pieces = pieces
 
-        self.king = [4,4]
+        if king == None:
+            self.king = [4,4]
+        else:
+            self.king = king
 
-        self.whites = [
-            [2,4],
-            [3,4],
-            [4,2],
-            [4,3],
-            [4,5],
-            [4,6],
-            [5,4],
-            [6,4]
-        ]
+        if white == None:
+            self.whites = [
+                [2,4],
+                [3,4],
+                [4,2],
+                [4,3],
+                [4,5],
+                [4,6],
+                [5,4],
+                [6,4]
+            ]
+        else:
+            self.whites = white
 
-        self.blacks = [
-            [0,3],
-            [0,4],
-            [0,5],
-            [1,4],
-            [3,0],
-            [3,8],
-            [4,0],
-            [4,1],
-            [4,7],
-            [4,8],
-            [5,0],
-            [5,8],
-            [7,4],
-            [8,3],
-            [8,4],
-            [8,5]
-        ]
+        if black == None:
+            self.blacks = [
+                [0,3],
+                [0,4],
+                [0,5],
+                [1,4],
+                [3,0],
+                [3,8],
+                [4,0],
+                [4,1],
+                [4,7],
+                [4,8],
+                [5,0],
+                [5,8],
+                [7,4],
+                [8,3],
+                [8,4],
+                [8,5]
+            ]
+        else:
+            self.blacks = black
 
         self.white_moves_to_eat = []
 
@@ -109,7 +121,7 @@ class Board():
         ax.set_yticks([0,1,2,3,4,5,6,7,8])
         ax.set_xticklabels(['A','B','C','D','E','F','G','H','I'])
         ax.set_yticklabels(['1','2','3','4','5','6','7','8','9'])
-        plt.show(block=False)
+        plt.show(block=True)
         return fig, ax
 
     def _convert_move(self, move):
@@ -344,7 +356,7 @@ class Board():
 
         
     #FIXME: Controllare che non usi troppa memoria
-    def white_fitness(self, move, alpha0, beta0, gamma0):
+    def white_fitness(self, move, alpha0, beta0, gamma0, theta0):
         tmp_board = Board()
         tmp_board.pieces = copy.deepcopy(self.pieces)
         tmp_board.blacks = copy.deepcopy(self.blacks)
@@ -367,12 +379,11 @@ class Board():
         else:
             tmp_board.king = [move[2], move[3]]
 
-
-        return whiteheuristics.white_fitness(tmp_board, alpha0, beta0, gamma0)
+        return whiteheuristics.white_fitness(tmp_board, alpha0, beta0, gamma0, theta0)
     
     def white_fitness_dynamic(self, move):
         piece = self.pieces[move[0]][move[1]]
-        return whiteheuristics.white_fitness_dynamic(self, move, piece, alpha0=10000)
+        return whiteheuristics.white_fitness_dynamic(self, move, piece, alpha0=10000, beta0=-3, gamma0=0.1)
 
     def all_possible_moves(self, player):
         moves = []
@@ -471,6 +482,80 @@ class Board():
         self.white_moves_to_eat = moves_to_eat
 
 
+    def copy(self):
+        return copy.deepcopy(self.pieces), copy.deepcopy(self.whites), copy.deepcopy(self.blacks), copy.deepcopy(self.king)
+    
+    def moves_to_eat_king(self):
+        '''
+        If the king can be eaten, self.black_moves_to_eat_king is set to a list of initial and final position of the white piece that eats
+        Otherwise, self.black_moves_to_eat_king is set to [[-1,-1], [-1,-1]]
+        '''
+        if self.king == [4,4]:
+            self.black_moves_to_eat_king = self.eat_king_in_castle()
+        else:
+            self.black_moves_to_eat_king = self.eat_king_outside_castle()
 
 
-            
+    def eat_king_in_castle(self):
+        '''
+        It returns starting and ending position of the piece that can eat the king, otherwise it returns [-1,-1], [-1,-1]
+        '''
+        position = self.check_sourrounded_king_castle()
+        if position == [-1,-1]:
+            return [[-1,-1], [-1,-1]]
+        for black in self.blacks:
+            if self.check_legality(black[0], black[1], position[0], position[1]):
+                return black, position
+        return [[-1,-1], [-1,-1]]
+
+
+
+    def check_sourrounded_king_castle(self):
+        '''
+        It returns the coordinates of one of the four tiles around the king, if the other three are occupied by three blacks
+        It returns [-1,-1] if the king is not sorrounded or he's not in the castle
+        '''
+        if self.pieces[4][3] == 1 and self.pieces[3][4] == 1 and self.pieces[4][5] == 1:
+            return [5,4]
+        if self.pieces[4][3] == 1 and self.pieces[5][4] == 1 and self.pieces[4][5] == 1:
+            return [3,4]
+        if self.pieces[5][4] == 1 and self.pieces[3][4] == 1 and self.pieces[4][5] == 1:
+            return [4,3]
+        if self.pieces[4][3] == 1 and self.pieces[3][4] == 1 and self.pieces[5][4] == 1:
+            return [4,5]
+        return [-1,-1]
+
+
+
+    def check_sourrounded_king_outside(self):
+        '''
+        It returns a list of possible moves to eat the king, when he's outside the castle
+        If there isn't any feasable move, it returns [-1,-1]
+        '''
+        r, c = self.king
+        tiles = []
+        if self.pieces[r][c-1] == 1:
+            tiles.append([r, c+1])
+        elif self.pieces[r][c+1] == 1:
+            tiles.append([r, c-1])
+        if self.pieces[r-1][c] == 1:
+            tiles.append([r+1][c])
+        elif self.pieces[r+1][c] == 1:
+            tiles.append([r-1][c])
+        return tiles if len(tiles) > 0 else [-1,-1]
+
+
+
+    def eat_king_outside_castle(self):
+        '''
+        It returns starting and ending position of the piece that can eat the king, otherwise it returns [[-1,-1], [-1,-1]]
+        '''
+        position = self.check_sourrounded_king_outside()
+        if position == [-1,-1]:
+            return [[-1,-1], [-1,-1]]
+        for black in self.blacks:
+            if self.check_legality(black[0], black[1], position[0][0], position[0][1]):
+                return [black, [position[0][0], position[0][1]]]
+            if len(position) == 2 and self.check_legality(black[0], black[1], position[1][0], position[1][1]):
+                return [black, [position[1][0], position[1][1]]]
+        return [[-1,-1], [-1,-1]]        
