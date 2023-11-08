@@ -29,46 +29,11 @@ class Pawn(Enum):
     KING = 3
 
 class Converter:
-    # TODO convert matrix to json check if it works and if it's needed
     def json_to_matrix(self, json_state):
         data = list(json_state.items())
-        array = np.array(data, dtype = object)
+        board, turn = data[0], data[1]
 
-        board = np.array(array[0, 1], dtype = object)
-        turn = array[1,1]
-        
-        blacks = []
-        whites = []
-        pieces = [[],[],[],[],[],[],[],[],[]]
-
-        state = np.zeros((9,9), dtype = Pawn)
-        for i in range(0,9):
-            for j in range (0,9):
-                if board[i,j] == 'EMPTY':
-                    state[i,j] = Pawn.EMPTY.value
-                    pieces[i].append(Pawn.EMPTY.value)
-                elif board[i,j] == 'WHITE':
-                    state[i,j] = Pawn.WHITE.value
-                    pieces[i].append(Pawn.WHITE.value)
-                    whites.append([i,j])
-                elif board[i,j] == 'BLACK':
-                    state[i,j] = Pawn.BLACK.value
-                    pieces[i].append(Pawn.BLACK.value)
-                    blacks.append([i,j])
-                elif board[i,j] == 'KING':
-                    state[i,j] = Pawn.KING.value
-                    pieces[i].append(Pawn.KING.value)
-                    king = [i,j]
-                    king_position = (i,j)
-        board = Board()
-        board.whites = whites
-        board.blacks = blacks
-        board.king = king
-        board.pieces = pieces
-
-        for row in board.pieces:
-            print(row)
-        return board, turn, king_position
+        return board, turn
 
 class Network:
     def __init__(self, name, player, server_ip = 'localhost', converter = None, sock = None, timeout = 60):
@@ -127,16 +92,15 @@ class Network:
 
         # Converting byte into json 
         json_current_state_server = json.loads(current_state_server_bytes)
-        #print(json_current_state_server)
 
-        state, turn, king_pos = self.converter.json_to_matrix(json_current_state_server)
-        return state, turn, king_pos
+        state, turn = self.converter.json_to_matrix(json_current_state_server)
+        return state, turn
 
     def send_move(self, move):
-        _form, _to = move
+        _from, _to = move
         turn = self.player
 
-        move = json.dumps({"from": _form, "to": _to, "turn": turn})
+        move = json.dumps({"from": _from, "to": _to, "turn": turn})
 
         self.sock.send(struct.pack('>i', len(move)))
         self.sock.send(move.encode())
