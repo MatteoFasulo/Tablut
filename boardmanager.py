@@ -18,7 +18,7 @@ class BadMoveException(Exception):
         super().__init__(msg)
 
 class Board():
-    def __init__(self):
+    def __init__(self, pieces= None, white= None, black= None, king=None):
         """
         Instances a board
         """
@@ -34,50 +34,62 @@ class Board():
             [WHITE, WHITE2, WHITE, WHITE2, RED2, WHITE2, WHITE, WHITE2, WHITE],
             [GRAY, WHITE, WHITE2, RED2, RED, RED2, WHITE2, WHITE, GRAY],
         ]
+        if pieces == None:
         #This list of lists is the pieces, 0 is an empty square, 1 is a black piece, 2 is a white piece and 3 is the king
-        self.pieces = [
-            [0,0,0,1,1,1,0,0,0],
-            [0,0,0,0,1,0,0,0,0],
-            [0,0,0,0,2,0,0,0,0],
-            [1,0,0,0,2,0,0,0,1],
-            [1,1,2,2,3,2,2,1,1],
-            [1,0,0,0,2,0,0,0,1],
-            [0,0,0,0,2,0,0,0,0],
-            [0,0,0,0,1,0,0,0,0],
-            [0,0,0,1,1,1,0,0,0],
-        ]
+            self.pieces = [
+                [0,0,0,1,1,1,0,0,0],
+                [0,0,0,0,1,0,0,0,0],
+                [0,0,0,0,2,0,0,0,0],
+                [1,0,0,0,2,0,0,0,1],
+                [1,1,2,2,3,2,2,1,1],
+                [1,0,0,0,2,0,0,0,1],
+                [0,0,0,0,2,0,0,0,0],
+                [0,0,0,0,1,0,0,0,0],
+                [0,0,0,1,1,1,0,0,0],
+            ]
+        else:
+            self.pieces = pieces
 
-        self.king = [4,4]
+        if king == None:
+            self.king = [4,4]
+        else:
+            self.king = king
 
-        self.whites = [
-            [2,4],
-            [3,4],
-            [4,2],
-            [4,3],
-            [4,5],
-            [4,6],
-            [5,4],
-            [6,4]
-        ]
+        if white == None:
+            self.whites = [
+                [2,4],
+                [3,4],
+                [4,2],
+                [4,3],
+                [4,5],
+                [4,6],
+                [5,4],
+                [6,4]
+            ]
+        else:
+            self.whites = white
 
-        self.blacks = [
-            [0,3],
-            [0,4],
-            [0,5],
-            [1,4],
-            [3,0],
-            [3,8],
-            [4,0],
-            [4,1],
-            [4,7],
-            [4,8],
-            [5,0],
-            [5,8],
-            [7,4],
-            [8,3],
-            [8,4],
-            [8,5]
-        ]
+        if black == None:
+            self.blacks = [
+                [0,3],
+                [0,4],
+                [0,5],
+                [1,4],
+                [3,0],
+                [3,8],
+                [4,0],
+                [4,1],
+                [4,7],
+                [4,8],
+                [5,0],
+                [5,8],
+                [7,4],
+                [8,3],
+                [8,4],
+                [8,5]
+            ]
+        else:
+            self.blacks = black
 
         self.white_moves_to_eat = []
 
@@ -109,7 +121,7 @@ class Board():
         ax.set_yticks([0,1,2,3,4,5,6,7,8])
         ax.set_xticklabels(['A','B','C','D','E','F','G','H','I'])
         ax.set_yticklabels(['1','2','3','4','5','6','7','8','9'])
-        plt.show(block=False)
+        plt.show(block=True)
         return fig, ax
 
     def _convert_move(self, move):
@@ -303,7 +315,7 @@ class Board():
             return False
         
     #FIXME: Controllare che non usi troppa memoria
-    def white_fitness(self, move, alpha0, beta0, gamma0):
+    def white_fitness(self, move, alpha0, beta0, gamma0, theta0):
         tmp_board = Board()
         tmp_board.pieces = copy.deepcopy(self.pieces)
         tmp_board.blacks = copy.deepcopy(self.blacks)
@@ -326,12 +338,11 @@ class Board():
         else:
             tmp_board.king = [move[2], move[3]]
 
-
-        return whiteheuristics.white_fitness(tmp_board, alpha0, beta0, gamma0)
+        return whiteheuristics.white_fitness(tmp_board, alpha0, beta0, gamma0, theta0)
     
     def white_fitness_dynamic(self, move):
         piece = self.pieces[move[0]][move[1]]
-        return whiteheuristics.white_fitness_dynamic(self, move, piece, alpha0=10000)
+        return whiteheuristics.white_fitness_dynamic(self, move, piece, alpha0=10000, beta0=-3, gamma0=0.1)
 
     def all_possible_moves(self, player):
         moves = []
@@ -430,6 +441,7 @@ class Board():
         self.white_moves_to_eat = moves_to_eat
 
 
-
+    def copy(self):
+        return copy.deepcopy(self.pieces), copy.deepcopy(self.whites), copy.deepcopy(self.blacks), copy.deepcopy(self.king)
 
             
