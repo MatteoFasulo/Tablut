@@ -29,14 +29,15 @@ def localrun(player_team : str, player_name : str, timelimit : int):
     }
 
     alpha0 = -5
-    beta0 = 0.01
-    gamma0 = -1000
-    theta0 = 2
+    beta0 = 15
+    gamma0 = 0.5
+    theta0 = -1000
+    epsilon0 = 2
 
     L = []
     for move in board.all_possible_moves("WHITE"):
         fit = 0
-        fit += board.white_fitness_dynamic(move) + board.white_fitness(move, alpha0, beta0, gamma0, theta0)
+        fit += board.white_fitness_dynamic(move) + board.white_fitness(move, alpha0, beta0, gamma0, theta0,epsilon0)
         L.append((move, fit))
     L = sorted(L, key= lambda x: x[1], reverse=True)
     mv = L[0][0]
@@ -56,7 +57,7 @@ def localrun(player_team : str, player_name : str, timelimit : int):
         L = []
         for move in board.all_possible_moves("WHITE"):
             fit = 0
-            fit += board.white_fitness_dynamic(move) + board.white_fitness(move, alpha0, beta0, gamma0, theta0)
+            fit += board.white_fitness_dynamic(move) + board.white_fitness(move, alpha0, beta0, gamma0, theta0,epsilon0)
             L.append((move, fit))
         L = sorted(L, key= lambda x: x[1], reverse=True)
         mv = L[0][0]

@@ -356,7 +356,7 @@ class Board():
 
         
     #FIXME: Controllare che non usi troppa memoria
-    def white_fitness(self, move, alpha0, beta0, gamma0, theta0):
+    def white_fitness(self, move, alpha0, beta0, gamma0, theta0, epsilon0):
         tmp_board = Board()
         tmp_board.pieces = copy.deepcopy(self.pieces)
         tmp_board.blacks = copy.deepcopy(self.blacks)
@@ -370,16 +370,16 @@ class Board():
             for black in tmp_board.blacks:
                 if black[0] == move[0] and black[1] == move[1]:
                     black[0] = move[2]
-                    black[0] = move[3]
+                    black[1] = move[3]
         elif tmp_board.pieces[move[2]][move[3]] == 2:
             for white in tmp_board.whites:
                 if white[0] == move[0] and white[1] == move[1]:
                     white[0] = move[2]
-                    white[0] = move[3]
+                    white[1] = move[3]
         else:
             tmp_board.king = [move[2], move[3]]
 
-        return whiteheuristics.white_fitness(tmp_board, alpha0, beta0, gamma0, theta0)
+        return whiteheuristics.white_fitness(tmp_board, alpha0, beta0, gamma0, theta0, epsilon0)
     
     def white_fitness_dynamic(self, move):
         piece = self.pieces[move[0]][move[1]]
