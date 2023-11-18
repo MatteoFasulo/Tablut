@@ -1,5 +1,6 @@
 import json
 import socket
+import sys
 import struct
 import numpy as np
 from enum import Enum
@@ -106,10 +107,25 @@ class Network:
 
         state, turn = self.converter.json_to_matrix(json_current_state_server)
 
-        self.turn = turn
-        self.state = state
+        if not turn in ['WHITEWIN', 'BLACKWIN', 'DRAW']:
 
-        return state, turn
+            self.turn = turn
+            self.state = state
+
+            return state, turn
+
+        else:
+            if turn == 'WHITEWIN':
+                print("WHITE WINS!")
+                sys.exit(0)
+
+            elif turn == 'BLACKWIN':
+                print("BLACK WINS!")
+                sys.exit(0)
+
+            elif turn == 'DRAW':
+                print("DRAW!")
+                sys.exit(0)
 
     def send_move(self, move):
         _from, _to = move

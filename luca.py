@@ -8,7 +8,7 @@ import copy
 from collections import namedtuple, Counter, defaultdict
 from enum import Enum
 
-from threading import Thread
+import threading
 
 # numpy
 import numpy as np
@@ -82,7 +82,7 @@ class Board(defaultdict):
         """
         return str(self.pieces)
 
-    def display(self):
+    def display(self, fig=None, ax=None):
         """
         Representation of the board using matplotlib
         """
@@ -90,7 +90,10 @@ class Board(defaultdict):
         # Create a new array of integers representing the pieces
         pieces_int = self.pieces
 
-        fig, ax = plt.subplots()
+        # If fig and ax are not provided, create a new figure and axis
+        if fig is None or ax is None:
+            fig, ax = plt.subplots()
+
         ax.matshow(pieces_int, cmap="Set3")
 
         # Changes the size of the pieces
@@ -111,12 +114,20 @@ class Board(defaultdict):
         ax.set_yticks([0, 1, 2, 3, 4, 5, 6, 7, 8])
         ax.set_xticklabels(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'])
         ax.set_yticklabels(['1', '2', '3', '4', '5', '6', '7', '8', '9'])
+
+        # Draw the canvas and flush events
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+        time.sleep(0.1)
+
+        # Display the plot without blocking
         plt.show(block=False)
+
         return fig, ax
 
 
 class Tablut(Game):
-    def __init__(self, player, height=9, width=9):
+    def __init__(self, player, pieces, height=9, width=9):
         self.initial = Board(height=height, width=width,
                              to_move='WHITE', utility=0)
         self.to_move = player
@@ -124,22 +135,22 @@ class Tablut(Game):
         self.width = width
         self.height = height
 
-        pieces = self.initial.white if self.initial.to_move == 'WHITE' else self.initial.black
-
         # Get the list of all the possible moves
-        self.squares = [[x, (k, l)] for x in pieces for k in range(
-            width) for l in range(height)]
+        self.squares = []
+
+    def update_state(self, pieces, turn):
+        self.initial.pieces = pieces
+        self.initial.to_move = turn
+        self.to_move = turn
+
+        if turn == 'WHITE':
+            self.squares = [[x, (k, l)] for x in self.initial.white for k in range(
+                self.width) for l in range(self.height)]
+        elif turn == 'BLACK':
+            self.squares = [[x, (k, l)] for x in self.initial.black for k in range(
+                self.width) for l in range(self.height)]
 
     def actions(self, board) -> set:
-        """Illegal moves are:
-        - moving out of the board (off-board) based on the current board size # handled by self.squares
-        - moving on the throne which is the center of the board (4,4) # handled by forbidden_moves
-        - moving on another piece (already occupied position)
-        - moving on the same position where the piece is currently located (not moving)
-        - moving a piece that is not yours (based on the current player)
-        - moving diagonally (only orthogonally)
-        - moving a step over another piece (jumping or climbing)
-        """
 
         white = board.white
         black = board.black
@@ -162,18 +173,16 @@ class Tablut(Game):
 
         # Get the list of the occupied squares in coordinates (x, y)
         occupied_squares = np.argwhere(
-            (board.pieces == Pawn.WHITE) | (board.pieces == Pawn.BLACK) | (board.pieces == Pawn.KING))
+            (board.pieces == Pawn.WHITE.value) | (board.pieces == Pawn.BLACK.value) | (board.pieces == Pawn.KING.value))
 
         # Get the list of the occupied squares in coordinates (x, y)
         occupied_squares = set(map(tuple, occupied_squares))
-
         forbidden_moves = set()
 
         # Starting position (tuple) and ending position (tuple)
         for move in self.squares:
             from_pos = move[0]
             from_row, from_col = from_pos
-
             to_pos = move[1]
             to_row, to_col = to_pos
 
@@ -236,12 +245,15 @@ class Tablut(Game):
                         for i in range(j+1, self.height):
                             forbidden_moves.add((from_pos, (i, from_col)))
 
+        # test
+        # banned_move = ((4, 8), (0, 8))
+        # forbidden_moves.add(banned_move)
+        # print(self.convert_move(banned_move))
+
         # return difference between all possible moves and forbidden moves (list of tuples)
         total_moves = set(tuple(tuple(k) for k in h)
                           for h in self.squares)
-
         allowed_moves = total_moves - forbidden_moves
-
         return allowed_moves
 
     def result(self, board, pieces):
@@ -249,7 +261,7 @@ class Tablut(Game):
         player = board.to_move
         board.pieces = pieces
         board.to_move = 'BLACK' if player == 'WHITE' else 'WHITE'
-        win = False  # TODO : add win condition here
+        win = self.check_win(board)
         board.utility = (0 if not win else +1 if player == 'WHITE' else -1)
         return board
 
@@ -259,7 +271,37 @@ class Tablut(Game):
 
     def terminal_test(self, board):
         """A board is a terminal state if it is won or there are no empty squares."""
-        return board.utility != 0 or len(self.squares) == len(board)
+        return board.utility != 0
+
+    def check_win(self, board):
+        """
+        End of game:
+        - King captured (BLACK wins)
+        - King escaped (WHITE wins)
+        - A player can’t move any checker in any direction: that player loses
+        - The same "state" of the game is reached twice: draw
+        """
+
+        white_pieces = board.white
+        black_pieces = board.black
+        king_pieces = board.king
+
+        # Check if the king is captured
+        if len(king_pieces) == 0:
+            return True
+
+        # Check if the king escaped
+        king_pos = king_pieces[0]
+        king_row, king_col = king_pos
+        if king_row == 0 or king_row == self.width-1 or king_col == 0 or king_col == self.height-1:
+            return True
+
+        # Check if the king is surrounded
+        if king_row > 0 and king_row < self.width-1 and king_col > 0 and king_col < self.height-1:
+            if (king_row-1, king_col) in black_pieces and (king_row+1, king_col) in black_pieces and (king_row, king_col-1) in black_pieces and (king_row, king_col+1) in black_pieces:
+                return True
+
+        return False
 
     def convert_move(self, move):
         """Convert move to (A1, A2) format
@@ -285,7 +327,7 @@ class Tablut(Game):
         return (from_col + str(from_row), to_col + str(to_row))
 
     def display(self, board):
-        print(board)
+        board.display()
 
 
 def play_game(name: str, team: str, server_ip: str, timeout: int):
@@ -295,41 +337,46 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
     pieces, turn = network.connect()
 
     # Initialize game
-    game = Tablut(team)
+    game = Tablut(team, pieces)
+    game.update_state(pieces, turn)
 
-    game.initial.pieces = pieces
-    game.initial.to_move = turn
-    game.to_move = turn
+    # Create a condition variable
+    cond = threading.Condition()
 
     # Play game
     state = game.initial
 
     while not game.terminal_test(state):
-        while not network.check_turn(player=team):
-            print('Waiting for opponent move...')
-            time.sleep(1)
+        with cond:
+            while not network.check_turn(player=team):
+                print('Waiting for opponent move...')
+                cond.wait(timeout=1)
+                pieces, turn = network.get_state()
+
+                # Update the game state for the current player
+                game.update_state(pieces, turn)
+
+            # Get move
+            start = time.time()
+            move = h_alphabeta_search(game, state)[-1]
+            end = time.time()
+
+            # Send move to server
+            converted_move = game.convert_move(move)
+            network.send_move(converted_move)
             pieces, turn = network.get_state()
 
-            game = Tablut(team)
-            game.initial.pieces = pieces
-            game.initial.to_move = turn
-            game.to_move = turn
+            # Update the game state for the current player
+            game.update_state(pieces, turn)
 
-        # Get move
-        start = time.time()
-        move = h_alphabeta_search(game, state)[-1]
-        end = time.time()
+            # Update state
+            state = game.result(state, pieces)
 
-        # Send move to server
-        converted_move = game.convert_move(move)
-        network.send_move(converted_move)
-        pieces, turn = network.get_state()
+            print('move:', converted_move, 'time: ', end-start, 's.')
+            print(state)
 
-        # Update state
-        state = game.result(state, pieces)
-
-        print('move:', converted_move, 'time: ', end-start, 's.')
-        print(state, '\n')
+            # Notify the other thread
+            cond.notify_all()
 
     print('Game over!')
 
@@ -371,7 +418,7 @@ def cutoff_depth(d):
 # TODO change depth (d)
 
 
-def h_alphabeta_search(game, state, cutoff=cutoff_depth(1), h=lambda s, p: 0):
+def h_alphabeta_search(game, state, cutoff=cutoff_depth(5), h=lambda s, p: 0):
     """Search game to determine best action; use alpha-beta pruning.
     As in [Figure 5.7], this version searches all the way to the leaves."""
 
