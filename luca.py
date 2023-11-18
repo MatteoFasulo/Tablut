@@ -65,14 +65,6 @@ class Board(defaultdict):
     def to_move(self, state):
         return self.__dict__['to_move']
 
-    def new(self, changes: dict, **kwds) -> 'Board':
-        "Given a dict of {(x, y): contents} changes, return a new Board with the changes."
-        board = Board(width=self.width, height=self.height, **kwds)
-        board.update(self)
-        board.update(changes)
-
-        return board
-
     def __missing__(self, loc):
         x, y = loc
         if 0 <= x < self.width and 0 <= y < self.height:
@@ -88,10 +80,7 @@ class Board(defaultdict):
         Given an np.array of pieces, return a string representation of the board
         with rows separated by newlines.
         """
-        # Create a new array of integers representing the pieces
-        pieces_int = np.vectorize(lambda x: x.value)(self.pieces)
-
-        return str(pieces_int)
+        return str(self.pieces)
 
     def display(self):
         """
@@ -99,7 +88,7 @@ class Board(defaultdict):
         """
 
         # Create a new array of integers representing the pieces
-        pieces_int = np.vectorize(lambda x: x.value)(self.pieces)
+        pieces_int = self.pieces
 
         fig, ax = plt.subplots()
         ax.matshow(pieces_int, cmap="Set3")
@@ -250,18 +239,16 @@ class Tablut(Game):
         # return difference between all possible moves and forbidden moves (list of tuples)
         total_moves = set(tuple(tuple(k) for k in h)
                           for h in self.squares)
-        print("total_moves: ", total_moves)
 
         allowed_moves = total_moves - forbidden_moves
-        print("forbidden_moves: ", forbidden_moves)
 
         return allowed_moves
 
-    def result(self, board, square):
+    def result(self, board, pieces):
         """Place a marker for current player on square."""
         player = board.to_move
-        board = board.new({square: player}, to_move=(
-            'BLACK' if player == 'WHITE' else 'WHITE'))
+        board.pieces = pieces
+        board.to_move = 'BLACK' if player == 'WHITE' else 'WHITE'
         win = False  # TODO : add win condition here
         board.utility = (0 if not win else +1 if player == 'WHITE' else -1)
         return board
@@ -310,44 +297,41 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
     # Initialize game
     game = Tablut(team)
 
-    # Assign initial state
     game.initial.pieces = pieces
-
-    # Assign turn
-    game.initial.to_move = turn[-1]
+    game.initial.to_move = turn
+    game.to_move = turn
 
     # Play game
     state = game.initial
 
     while not game.terminal_test(state):
-        player = state.to_move
-        if player == team:
-            start = time.time()
-            move = h_alphabeta_search(game, state)[-1]
-            end = time.time()
+        while not network.check_turn(player=team):
+            print('Waiting for opponent move...')
+            time.sleep(1)
+            pieces, turn = network.get_state()
 
-            # Send move to server
-            print("Move: ", move)
-            converted_move = game.convert_move(move)
-            print("Converted move: ", converted_move)
-            del game
-            network.send_move(converted_move)
-            pieces, turn = network.get_state()
             game = Tablut(team)
             game.initial.pieces = pieces
             game.initial.to_move = turn
-            state = game.result(state, move)
-            print('Player', player, 'move:',
-                  move, 'time: ', end-start, 's.')
-            print(state, '\n')
-            # state.display()
-        else:
-            print("Waiting for other player's move...")
-            pieces, turn = network.get_state()
-            game = Tablut(team)
-            game.initial.pieces = pieces
-            game.initial.to_move = turn
-            state = game.result(state, move)
+            game.to_move = turn
+
+        # Get move
+        start = time.time()
+        move = h_alphabeta_search(game, state)[-1]
+        end = time.time()
+
+        # Send move to server
+        converted_move = game.convert_move(move)
+        network.send_move(converted_move)
+        pieces, turn = network.get_state()
+
+        # Update state
+        state = game.result(state, pieces)
+
+        print('move:', converted_move, 'time: ', end-start, 's.')
+        print(state, '\n')
+
+    print('Game over!')
 
 
 class Pawn(Enum):

@@ -6,6 +6,7 @@ from enum import Enum
 
 from boardmanager import Board, BadMoveException
 
+
 class Utils:
     def __init__(self, board):
         self.board = board
@@ -17,10 +18,12 @@ class Utils:
 
         fit = 0
         if player == "WHITE":
-            fit += self.board.white_fitness_dynamic(move) + self.board.white_fitness(move, -5, 0.01, -1000)
+            fit += self.board.white_fitness_dynamic(
+                move) + self.board.white_fitness(move, -5, 0.01, -1000)
         else:
             fit += 0
         return fit
+
 
 class Pawn(Enum):
     EMPTY = 0
@@ -28,20 +31,28 @@ class Pawn(Enum):
     BLACK = 2
     KING = 3
 
+
 class Converter:
     def json_to_matrix(self, json_state):
         data = list(json_state.items())
         board, turn = data[0], data[1]
 
-        return board, turn
+        if isinstance(board, tuple):
+            board = board[1]
+
+        if isinstance(turn, tuple):
+            turn = turn[1]
+
+        return np.vectorize(lambda x: Pawn[x].value)(board), turn
+
 
 class Network:
-    def __init__(self, name, player, server_ip = 'localhost', converter = None, sock = None, timeout = 60):
+    def __init__(self, name, player, server_ip='localhost', converter=None, sock=None, timeout=60):
         if not sock:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         else:
             self.sock = sock
-        
+
         if converter:
             self.converter = converter
         else:
@@ -51,7 +62,7 @@ class Network:
         self.name = name
         self.player = player
         self.timeout = timeout
-    
+
     def recvall(self, n):
         # Helper function to recv n bytes or return None if EOF is hit
         data = b''
@@ -61,7 +72,7 @@ class Network:
                 return None
             data += packet
         return data
-    
+
     def connect(self):
         if self.player == 'WHITE':
             # Connect the socket to the port where the server is listening
@@ -90,10 +101,14 @@ class Network:
         len_bytes = struct.unpack('>i', self.recvall(4))[0]
         current_state_server_bytes = self.sock.recv(len_bytes)
 
-        # Converting byte into json 
+        # Converting byte into json
         json_current_state_server = json.loads(current_state_server_bytes)
 
         state, turn = self.converter.json_to_matrix(json_current_state_server)
+
+        self.turn = turn
+        self.state = state
+
         return state, turn
 
     def send_move(self, move):
@@ -105,3 +120,6 @@ class Network:
         self.sock.send(struct.pack('>i', len(move)))
         self.sock.send(move.encode())
         return move
+
+    def check_turn(self, player):
+        return self.turn == player
