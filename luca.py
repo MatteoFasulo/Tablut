@@ -52,15 +52,23 @@ class Board(defaultdict):
                 Pawn.BLACK, Pawn.EMPTY, Pawn.EMPTY, Pawn.EMPTY],
         ])
 
-        # Get the indices of the white, black and king pieces
-        white_pawns = np.where(self.pieces == Pawn.WHITE)
-        self.white = list(zip(white_pawns[0], white_pawns[1]))
+    def get_white(self):
+        pawns = np.where(self.pieces == Pawn.WHITE.value)
+        coordinates = list(zip(pawns[0], pawns[1]))
+        self.white = coordinates
+        return coordinates
 
-        black_pawns = np.where(self.pieces == Pawn.BLACK)
-        self.black = list(zip(black_pawns[0], black_pawns[1]))
+    def get_black(self):
+        pawns = np.where(self.pieces == Pawn.BLACK.value)
+        coordinates = list(zip(pawns[0], pawns[1]))
+        self.black = coordinates
+        return coordinates
 
-        king_pawn = np.where(self.pieces == Pawn.KING)
-        self.king = list(zip(king_pawn[0], king_pawn[1]))
+    def get_king(self):
+        pawns = np.where(self.pieces == Pawn.KING.value)
+        coordinates = list(zip(pawns[0], pawns[1]))
+        self.king = coordinates
+        return coordinates
 
     def to_move(self, state):
         return self.__dict__['to_move']
@@ -135,14 +143,18 @@ class Tablut(Game):
         self.width = width
         self.height = height
 
-        # Get the list of all the possible moves
-        self.squares = []
-
     def update_state(self, pieces, turn):
+        # Update board state
         self.initial.pieces = pieces
         self.initial.to_move = turn
         self.to_move = turn
 
+        # Update pawns coordinates
+        self.initial.get_white()
+        self.initial.get_black()
+        self.initial.get_king()
+
+        # Get the current player and compute the list of possible moves
         if turn == 'WHITE':
             self.squares = [[x, (k, l)] for x in self.initial.white for k in range(
                 self.width) for l in range(self.height)]
@@ -164,6 +176,7 @@ class Tablut(Game):
 
         # Get the list of the opponent pieces
         opponent_pieces = black if player == 'WHITE' else white
+        print("Opponent pieces:", opponent_pieces)
 
         # Get the list of the current player pieces
         player_pieces = white if player == 'WHITE' else black
@@ -192,6 +205,7 @@ class Tablut(Game):
             for occ_place in occupied_squares:
                 forbidden_moves.add(
                     (from_pos, occ_place))  # occupied squares
+                forbidden_moves.add((occ_place, occ_place))
 
             forbidden_moves.add((from_pos, from_pos))  # starting position
 
@@ -203,6 +217,7 @@ class Tablut(Game):
                 forbidden_moves.add((from_pos, to_pos))
 
             # remove moves which implies to jumping over a piece
+            # TODO rewrite this part of the code
             j = None
             if from_row == to_row:
                 if from_col > to_col:
@@ -210,7 +225,6 @@ class Tablut(Game):
                         if (from_row, i) in occupied_squares:
                             forbidden_moves.add((from_pos, (from_row, i)))
                             j = i
-                            break
                     if j:
                         for i in range(0, j):
                             forbidden_moves.add((from_pos, (from_row, i)))
@@ -220,7 +234,6 @@ class Tablut(Game):
                         if (from_row, i) in occupied_squares:
                             forbidden_moves.add((from_pos, (from_row, i)))
                             j = i
-                            break
                     if j:
                         for i in range(j+1, self.width):
                             forbidden_moves.add((from_pos, (from_row, i)))
@@ -231,7 +244,6 @@ class Tablut(Game):
                         if (i, from_col) in occupied_squares:
                             forbidden_moves.add((from_pos, (i, from_col)))
                             j = i
-                            break
                     if j:
                         for i in range(0, j):
                             forbidden_moves.add((from_pos, (i, from_col)))
@@ -240,7 +252,6 @@ class Tablut(Game):
                         if (i, from_col) in occupied_squares:
                             forbidden_moves.add((from_pos, (i, from_col)))
                             j = i
-                            break
                     if j:
                         for i in range(j+1, self.height):
                             forbidden_moves.add((from_pos, (i, from_col)))
@@ -254,6 +265,7 @@ class Tablut(Game):
         total_moves = set(tuple(tuple(k) for k in h)
                           for h in self.squares)
         allowed_moves = total_moves - forbidden_moves
+
         return allowed_moves
 
     def result(self, board, pieces):
@@ -286,45 +298,38 @@ class Tablut(Game):
         black_pieces = board.black
         king_pieces = board.king
 
-        # Check if the king is captured
+        # TODO Check if the king is captured
         if len(king_pieces) == 0:
             return True
 
-        # Check if the king escaped
-        king_pos = king_pieces[0]
-        king_row, king_col = king_pos
-        if king_row == 0 or king_row == self.width-1 or king_col == 0 or king_col == self.height-1:
-            return True
+        # TODO Check if the king escaped (16 escape squares, all cells on the edge of the board except for the corners)
 
-        # Check if the king is surrounded
-        if king_row > 0 and king_row < self.width-1 and king_col > 0 and king_col < self.height-1:
-            if (king_row-1, king_col) in black_pieces and (king_row+1, king_col) in black_pieces and (king_row, king_col-1) in black_pieces and (king_row, king_col+1) in black_pieces:
-                return True
+        # TODO Check if the king is surrounded
 
         return False
 
     def convert_move(self, move):
+        # TODO check if it is consistent with server board representation
         """Convert move to (A1, A2) format
-        Move: ((x1, y1), (x2, y2))"""
+        Move: ((x1, y1), (x2, y2))
+        Example: ((3,0), (3,3))
+        Convert to: (D1, D4)"""
+
         cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
 
-        # Get the starting position
         from_pos = move[0]
         from_row, from_col = from_pos
 
-        # Get the ending position
         to_pos = move[1]
         to_row, to_col = to_pos
 
-        # Convert the starting position
-        from_col = cols[from_col]
-        from_row = from_row + 1
+        from_letter = cols[from_row]
+        to_letter = cols[to_row]
 
-        # Convert the ending position
-        to_col = cols[to_col]
-        to_row = to_row + 1
+        new_from_col = from_col + 1
+        new_to_col = to_col + 1
 
-        return (from_col + str(from_row), to_col + str(to_row))
+        return (from_letter+str(new_from_col), to_letter+str(new_to_col))
 
     def display(self, board):
         board.display()
@@ -361,9 +366,13 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
             move = h_alphabeta_search(game, state)[-1]
             end = time.time()
 
+            print('Chosen move:', move)
+
             # Send move to server
             converted_move = game.convert_move(move)
+            print("Converted move:", converted_move)
             network.send_move(converted_move)
+            print(state)
             pieces, turn = network.get_state()
 
             # Update the game state for the current player
@@ -383,8 +392,8 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
 
 class Pawn(Enum):
     EMPTY = 0
-    BLACK = 1
-    WHITE = 2
+    WHITE = 1
+    BLACK = 2
     KING = 3
 
 
@@ -419,8 +428,6 @@ def cutoff_depth(d):
 
 
 def h_alphabeta_search(game, state, cutoff=cutoff_depth(5), h=lambda s, p: 0):
-    """Search game to determine best action; use alpha-beta pruning.
-    As in [Figure 5.7], this version searches all the way to the leaves."""
 
     player = state.to_move
 
