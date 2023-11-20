@@ -58,9 +58,9 @@ class Tablut(Game):
 
     def actions(self, board) -> set:
 
-        white = board.white
-        black = board.black
-        king = board.king
+        white = board.get_white()
+        black = board.get_black()
+        king = board.get_king()
 
         # Get the current player
         player = board.to_move
@@ -198,7 +198,9 @@ class Tablut(Game):
         player = board.to_move
         board.to_move = 'BLACK' if player == 'WHITE' else 'WHITE'
         win = self.check_win(board)
-        board.utility = self.compute_utility(board, win)
+        fitness = self.compute_utility(board, win)
+        board.utility = (
+            0 if not win else fitness if player == 'WHITE' else -fitness)
         return board
 
     def utility(self, board, player):
@@ -217,13 +219,15 @@ class Tablut(Game):
             return 99999  # Winning state
 
         # Heuristic weights
-        alpha0 = 1  # Adjust these weights as needed
-        beta0 = 1
-        gamma0 = 1
+        alpha0 = -5  # Adjust these weights as needed
+        beta0 = 0.01
+        gamma0 = -1000
 
         # Additional heuristics
         fitness = white_fitness(board, alpha0, beta0,
                                 gamma0, theta0=0, epsilon0=0)
+
+        print("Fitness:", fitness)
 
         return fitness
 
@@ -238,11 +242,9 @@ class Tablut(Game):
 
         white_pieces = board.white
         black_pieces = board.black
-        king_pieces = board.king[0]
+        king_pieces = board.king
 
         # TODO Check if the king is captured
-        if len(king_pieces) == 0:
-            return True
 
         # @Teddy XXX: I'm assuming that king_pieces is in the form (x, y)
         if king_pieces[0] == self.width-1 or king_pieces[1] == self.width-1 or king_pieces[0] == 0 or king_pieces[1] == 0:

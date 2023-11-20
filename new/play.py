@@ -131,7 +131,7 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
             converted_move = game.convert_move(move)
             print("Converted move:", converted_move)
             network.send_move(converted_move)
-            print(state)
+            state.display()
             pieces, turn = network.get_state()
 
             # Update the game state for the current player
@@ -141,7 +141,7 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
             state = game.result(state, pieces)
 
             print('move:', converted_move, 'time: ', end-start, 's.')
-            print(state)
+            state.display()
 
             # Notify the other thread
             cond.notify_all()

@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # utils
-from utils import Pawn
+from utils import Pawn, WHITE, WHITE2, RED, RED2, GREEN, GREEN2, BLUE, GRAY
 
 
 class Board(defaultdict):
@@ -16,28 +16,19 @@ class Board(defaultdict):
         self.__dict__.update(width=width, height=height,
                              to_move=to_move, **kwds)
 
-    def get_white(self):
-        # print("SONO DENTRO GETWHITE")
-        # print(self.pieces)
-        pawns = np.where(self.pieces == Pawn.WHITE.value)
-        coordinates = list(zip(pawns[1], pawns[0]))
-        self.white = coordinates
-        self.whites = self.white
-        # print(self.white)
-        return coordinates
+        self.board = [
+            [GRAY, WHITE, WHITE2, RED2, RED, RED2, WHITE2, WHITE, GRAY],
+            [WHITE, WHITE2, WHITE, WHITE2, RED2, WHITE2, WHITE, WHITE2, WHITE],
+            [WHITE2, WHITE, WHITE2, WHITE, GREEN, WHITE, WHITE2, WHITE, WHITE2],
+            [RED2, WHITE2, WHITE, WHITE2, GREEN2, WHITE2, WHITE, WHITE2, RED2],
+            [RED, RED2, GREEN, GREEN2, BLUE, GREEN2, GREEN, RED2, RED],
+            [RED2, WHITE2, WHITE, WHITE2, GREEN2, WHITE2, WHITE, WHITE2, RED2],
+            [WHITE2, WHITE, WHITE2, WHITE, GREEN, WHITE, WHITE2, WHITE, WHITE2],
+            [WHITE, WHITE2, WHITE, WHITE2, RED2, WHITE2, WHITE, WHITE2, WHITE],
+            [GRAY, WHITE, WHITE2, RED2, RED, RED2, WHITE2, WHITE, GRAY],
+        ]
 
-    def get_black(self):
-        pawns = np.where(self.pieces == Pawn.BLACK.value)
-        coordinates = list(zip(pawns[1], pawns[0]))
-        self.black = coordinates
-        return coordinates
-
-    def get_king(self):
-        pawns = np.where(self.pieces == Pawn.KING.value)
-        coordinates = list(zip(pawns[1], pawns[0]))
-        self.king = coordinates
-        return coordinates
-
+    # AIMA methods
     def to_move(self, state):
         return self.__dict__['to_move']
 
@@ -58,31 +49,61 @@ class Board(defaultdict):
         """
         return str(self.pieces)
 
-    def display(self, fig=None, ax=None):
-        """
-        Representation of the board using matplotlib
-        """
+    # Board methods
+    def get_white(self):
+        # print("SONO DENTRO GETWHITE")
+        # print(self.pieces)
+        pawns = np.where(self.pieces == Pawn.WHITE.value)
+        coordinates = list(zip(pawns[1], pawns[0]))
+        self.white = coordinates
+        self.whites = self.white
+        # print(self.white)
+        return coordinates
 
-        # Create a new array of integers representing the pieces
-        pieces_int = self.pieces
+    def get_black(self):
+        pawns = np.where(self.pieces == Pawn.BLACK.value)
+        coordinates = list(zip(pawns[1], pawns[0]))
+        self.black = coordinates
+        return coordinates
 
-        # If fig and ax are not provided, create a new figure and axis
-        if fig is None or ax is None:
-            fig, ax = plt.subplots()
+    def get_king(self):
+        pawns = np.where(self.pieces == Pawn.KING.value)
+        coordinates = list(zip(pawns[1], pawns[0]))
+        self.king = coordinates[0]
+        return coordinates[0]
 
-        ax.matshow(pieces_int, cmap="Set3")
+    def _is_there_a_clear_view(self, piece1, piece2):
+        if piece1[0] == piece2[0]:
+            offset = 1 if piece1[1] <= piece2[1] else -1
+            for i in range(piece1[1] + offset, piece2[1], offset):
+                if self.pieces[piece1[0]][i] != 0:
+                    return False
+            return True
+        elif piece1[1] == piece2[1]:
+            offset = 1 if piece1[0] <= piece2[0] else -1
+            for i in range(piece1[0] + offset, piece2[0], offset):
+                if self.pieces[i][piece1[1]] != 0:
+                    return False
+            return True
+        else:
+            return False
+
+    # Representation of the board
+    def display(self):
+        fig, ax = plt.subplots()
+
+        ax.matshow(self.board, cmap="Greys")
 
         # Changes the size of the pieces
         fontsize = 30
 
-        # Dictionary to map Pawn values to their respective characters and colors
-        pawn_dict = {Pawn.BLACK: ("⛂", "black"), Pawn.WHITE: (
-            "⛀", "white"), Pawn.KING: ("⛁", "white")}
-
         # Places the pieces on the board
-        for pawn_value, (char, color) in pawn_dict.items():
-            for x, y in np.argwhere(self.pieces == pawn_value):
-                ax.text(x, y, char, ha='center', va='center',
+        for row in range(len(self.pieces)):
+            for piece in range(len(self.pieces[row])):
+                char = '⛀' if self.pieces[row][piece] == 2 else "⛂" if self.pieces[
+                    row][piece] == 1 else "⛁" if self.pieces[row][piece] == 3 else ""
+                color = "black" if self.pieces[row][piece] == 1 else "white"
+                ax.text(row, piece, char, ha='center', va='center',
                         color=color, fontsize=fontsize)
 
         plt.box(on=None)
@@ -90,13 +111,5 @@ class Board(defaultdict):
         ax.set_yticks([0, 1, 2, 3, 4, 5, 6, 7, 8])
         ax.set_xticklabels(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'])
         ax.set_yticklabels(['1', '2', '3', '4', '5', '6', '7', '8', '9'])
-
-        # Draw the canvas and flush events
-        fig.canvas.draw()
-        fig.canvas.flush_events()
-        time.sleep(0.1)
-
-        # Display the plot without blocking
         plt.show(block=False)
-
-        return fig, ax
+        plt.pause(5)

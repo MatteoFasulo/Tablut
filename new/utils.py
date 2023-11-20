@@ -6,6 +6,17 @@ from enum import Enum
 
 import numpy as np
 
+######## COSTANTS ########
+GRAY = (150, 150, 150)
+WHITE = (200, 200, 200)
+WHITE2 = (180, 180, 180)
+RED = (255, 0, 0)
+RED2 = (200, 0, 0)
+GREEN = (0, 255, 0)
+GREEN2 = (0, 200, 0)
+BLUE = (0, 0, 255)
+##########################
+
 
 # class Utils:
 #    def __init__(self, board):
