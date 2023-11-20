@@ -53,20 +53,23 @@ class Board(defaultdict):
         ])
 
     def get_white(self):
+        print("SONO DENTRO GETWHITE")
+        print(self.pieces)
         pawns = np.where(self.pieces == Pawn.WHITE.value)
-        coordinates = list(zip(pawns[0], pawns[1]))
+        coordinates = list(zip(pawns[1], pawns[0]))
         self.white = coordinates
+        print(self.white)
         return coordinates
 
     def get_black(self):
         pawns = np.where(self.pieces == Pawn.BLACK.value)
-        coordinates = list(zip(pawns[0], pawns[1]))
+        coordinates = list(zip(pawns[1], pawns[0]))
         self.black = coordinates
         return coordinates
 
     def get_king(self):
         pawns = np.where(self.pieces == Pawn.KING.value)
-        coordinates = list(zip(pawns[0], pawns[1]))
+        coordinates = list(zip(pawns[1], pawns[0]))
         self.king = coordinates
         return coordinates
 
@@ -173,6 +176,7 @@ class Tablut(Game):
 
         # Get the opponent
         opponent = 'BLACK' if player == 'WHITE' else 'WHITE'
+        print("White pieces:", self.initial.white)
 
         # Get the list of the opponent pieces
         opponent_pieces = black if player == 'WHITE' else white
@@ -209,6 +213,7 @@ class Tablut(Game):
 
             forbidden_moves.add((from_pos, from_pos))  # starting position
 
+            # Can't move enemy's pawn
             if from_pos in opponent_pieces:
                 forbidden_moves.add((from_pos, to_pos))
 
@@ -216,45 +221,73 @@ class Tablut(Game):
             if from_row != to_row and from_col != to_col:
                 forbidden_moves.add((from_pos, to_pos))
 
-            # remove moves which implies to jumping over a piece
-            # TODO rewrite this part of the code
-            j = None
-            if from_row == to_row:
-                if from_col > to_col:
-                    for i in range(to_col, from_col):
-                        if (from_row, i) in occupied_squares:
-                            forbidden_moves.add((from_pos, (from_row, i)))
-                            j = i
-                    if j:
-                        for i in range(0, j):
-                            forbidden_moves.add((from_pos, (from_row, i)))
+            # remove moves which implies jumping over a piece
+            # The idea is to check in a "circular" way the perimeter around the piece
+            # So it only needs one for-loop.
+            # If flags are not set, the move is legal. If the flag is set (= i'm on a piece or over it)
+            # Add the move to the forbiddens one
 
-                else:
-                    for i in range(from_col, to_col):
-                        if (from_row, i) in occupied_squares:
-                            forbidden_moves.add((from_pos, (from_row, i)))
-                            j = i
-                    if j:
-                        for i in range(j+1, self.width):
-                            forbidden_moves.add((from_pos, (from_row, i)))
+            flags = [
+                False,
+                False,
+                False,
+                False
+            ]
 
-            else:
-                if from_row > to_row:
-                    for i in range(to_row, from_row):
-                        if (i, from_col) in occupied_squares:
-                            forbidden_moves.add((from_pos, (i, from_col)))
-                            j = i
-                    if j:
-                        for i in range(0, j):
-                            forbidden_moves.add((from_pos, (i, from_col)))
-                else:
-                    for i in range(from_row, to_row):
-                        if (i, from_col) in occupied_squares:
-                            forbidden_moves.add((from_pos, (i, from_col)))
-                            j = i
-                    if j:
-                        for i in range(j+1, self.height):
-                            forbidden_moves.add((from_pos, (i, from_col)))
+            # The castle count as a pawn in this control (you can't go through it)
+            occupied_squares.add((4,4))
+
+
+            for i in range(1, self.width):
+                if from_col - i >= 0:
+                    if flags[0] or (from_row, from_col - i) in occupied_squares:
+                        flags[0] = True
+                        forbidden_moves.add((from_pos, (from_row, from_col-i)))
+                if from_row - i >= 0:
+                    if flags[1] or (from_row - i, from_col) in occupied_squares:
+                        flags[1] = True
+                        forbidden_moves.add((from_pos, (from_row-1, from_col)))
+                if from_col + i < self.width:
+                    if flags[2] or (from_row, from_col + i) in occupied_squares:
+                        flags[2] = True
+                        forbidden_moves.add((from_pos, (from_row, from_col + i)))
+                if from_row + i < self.width:
+                    if flags[3] or (from_row + i, from_col) in occupied_squares:
+                        flags[3] = True
+                        forbidden_moves.add((from_pos, (from_row + i, from_col)))
+
+            # Barrack's check
+            #TODO: check if this notation (the coords) is correct
+            barracks = (
+                (
+                    (0,3),
+                    (0,4),
+                    (0,5),
+                    (1,4)
+                ),
+                (
+                    (3,0),
+                    (4,0),
+                    (5,0),
+                    (4,1)
+                ),
+                (
+                    (self.width-1, 3),
+                    (self.width-1, 4),
+                    (self.width-1, 5),
+                    (self.width-2, 4)
+                ),
+                (
+                    (3, self.width-1),
+                    (4, self.width-1),
+                    (5, self.width-1),
+                    (4, self.width-2),
+                )
+            )
+            # If i move from outside a barrack inside a barrack, that move is invalid. But i can move freely move inside barracks
+            for barrack in barracks:
+                if from_pos not in barrack and to_pos in barrack:
+                    forbidden_moves.add((from_pos, to_pos))
 
         # test
         # banned_move = ((4, 8), (0, 8))
@@ -296,15 +329,19 @@ class Tablut(Game):
 
         white_pieces = board.white
         black_pieces = board.black
-        king_pieces = board.king
+        king_pieces = board.king[0]
 
         # TODO Check if the king is captured
         if len(king_pieces) == 0:
             return True
 
-        # TODO Check if the king escaped (16 escape squares, all cells on the edge of the board except for the corners)
+        # @Teddy XXX: I'm assuming that king_pieces is in the form (x, y)
+        if king_pieces[0] == self.width-1 or king_pieces[1] == self.width-1 or king_pieces[0] == 0 or king_pieces[1] == 0:
+            #@Teddy XXX: Do i have to return True or False if white wins?
+            return True
 
         # TODO Check if the king is surrounded
+        # @Teddy: Isn't this redundant? We already check if the king is alive or dead
 
         return False
 
@@ -357,6 +394,10 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
                 print('Waiting for opponent move...')
                 cond.wait(timeout=1)
                 pieces, turn = network.get_state()
+
+                print("SONO NEL CAZZO DI MAIN")
+                print(f"PIECES:\n{pieces}")
+                print(f"TURN:\n{turn}")
 
                 # Update the game state for the current player
                 game.update_state(pieces, turn)
@@ -469,4 +510,4 @@ def h_alphabeta_search(game, state, cutoff=cutoff_depth(5), h=lambda s, p: 0):
 color = sys.argv[1]
 name = sys.argv[2]
 print(color)
-play_game(name=name, team=color, server_ip='57.129.16.112', timeout=60)
+play_game(name=name, team=color, server_ip='127.0.0.1', timeout=60)
