@@ -2,28 +2,27 @@ import json
 import socket
 import sys
 import struct
-import numpy as np
 from enum import Enum
 
-from boardmanager import Board, BadMoveException
+import numpy as np
 
 
-class Utils:
-    def __init__(self, board):
-        self.board = board
-
-    def evalutate_utility(self, board, move, player):
-        """
-        Evaluate the utility of a move
-        """
-
-        fit = 0
-        if player == "WHITE":
-            fit += self.board.white_fitness_dynamic(
-                move) + self.board.white_fitness(move, -5, 0.01, -1000)
-        else:
-            fit += 0
-        return fit
+# class Utils:
+#    def __init__(self, board):
+#        self.board = board
+#
+#    def evalutate_utility(self, board, move, player):
+#        """
+#        Evaluate the utility of a move
+#        """
+#
+#        fit = 0
+#        if player == "WHITE":
+#            fit += self.board.white_fitness_dynamic(
+#                move) + self.board.white_fitness(move, -5, 0.01, -1000)
+#        else:
+#            fit += 0
+#        return fit
 
 
 class Pawn(Enum):
@@ -44,7 +43,10 @@ class Converter:
         if isinstance(turn, tuple):
             turn = turn[1]
 
-        return np.vectorize(lambda x: Pawn[x].value)(board), turn
+        board = np.vectorize(lambda x: Pawn[x].value)(board)
+        board = board.reshape(9, 9)
+
+        return board, turn
 
 
 class Network:
