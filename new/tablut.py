@@ -57,10 +57,12 @@ class Tablut(Game):
         return captured_pos in player_pieces
 
     def actions(self, board) -> set:
+        # TODO "mossa che scavalca una citadel è vietata"
 
         white = board.get_white()
         black = board.get_black()
         king = board.get_king()
+        throne = [(4, 4)]
 
         # Get the current player
         player = board.to_move
@@ -68,23 +70,28 @@ class Tablut(Game):
         # print("White pieces:", white)
 
         # Get the list of the opponent pieces
-        opponent_pieces = black if player == 'WHITE' else white
-        # print("Opponent pieces:", opponent_pieces)
+        if player == 'WHITE':
+            player_pieces = white
+            player_pieces.append(king)
+            opponent_pieces = black
 
-        # Get the list of the current player pieces
-        player_pieces = white if player == 'WHITE' else black
-
-        # Get the list of the king
-        king_pieces = king
+        elif player == 'BLACK':
+            player_pieces = black
+            opponent_pieces = white
+            opponent_pieces.append(king)
 
         # Get the list of the occupied squares in coordinates (x, y)
-        occupied_squares = np.argwhere(
-            (board.pieces == Pawn.WHITE.value) | (board.pieces == Pawn.BLACK.value) | (board.pieces == Pawn.KING.value))
+        # occupied_squares = np.argwhere(
+        #    (board.pieces == Pawn.WHITE.value) | (board.pieces == Pawn.BLACK.value) | (board.pieces == Pawn.KING.value))
+
+        # Occupied squares as the set of tuples of white, black and king pieces
+        occupied_squares = player_pieces + opponent_pieces + throne
 
         # Get the list of the occupied squares in coordinates (x, y)
         occupied_squares = set(map(tuple, occupied_squares))
         # throne is always an occupied square (even if it is empty) | you can't go through it
-        occupied_squares.add((4, 4))
+
+        print("Occupied squares:", occupied_squares)
 
         # Initialize forbidden moves set
         forbidden_moves = set()
@@ -96,13 +103,9 @@ class Tablut(Game):
             to_pos = move[1]
             to_row, to_col = to_pos
 
-            # Forbidden moves
-            forbidden_moves.add((from_pos, (4, 4)))  # throne
-
             for occ_place in occupied_squares:
                 forbidden_moves.add(
                     (from_pos, occ_place))  # occupied squares
-                forbidden_moves.add((occ_place, occ_place))
 
             forbidden_moves.add((from_pos, from_pos))  # starting position
 
@@ -131,16 +134,18 @@ class Tablut(Game):
                 if from_col - i >= 0:
                     if flags[0] or (from_row, from_col - i) in occupied_squares:
                         flags[0] = True
-                        forbidden_moves.add((from_pos, (from_row, from_col-i)))
+                        forbidden_moves.add(
+                            (from_pos, (from_row, from_col - i)))
                 if from_row - i >= 0:
                     if flags[1] or (from_row - i, from_col) in occupied_squares:
                         flags[1] = True
-                        forbidden_moves.add((from_pos, (from_row-1, from_col)))
+                        forbidden_moves.add(
+                            (from_pos, (from_row - i, from_col)))
                 if from_col + i < self.width:
-                    if flags[2] or (from_row, from_col + i) in occupied_squares:
+                    if flags[2] or (from_row, from_col+i) in occupied_squares:
                         flags[2] = True
                         forbidden_moves.add(
-                            (from_pos, (from_row, from_col + i)))
+                            (from_pos, (from_row, from_col+i)))
                 if from_row + i < self.width:
                     if flags[3] or (from_row + i, from_col) in occupied_squares:
                         flags[3] = True
@@ -176,14 +181,10 @@ class Tablut(Game):
                 )
             )
             # If i move from outside a barrack inside a barrack, that move is invalid. But i can move freely move inside barracks
+            # TODO check for the whole path from "from_pos" to "to_pos", trampling over
             for barrack in barracks:
                 if from_pos not in barrack and to_pos in barrack:
                     forbidden_moves.add((from_pos, to_pos))
-
-        # test
-        # banned_move = ((4, 8), (0, 8))
-        # forbidden_moves.add(banned_move)
-        # print(self.convert_move(banned_move))
 
         # return difference between all possible moves and forbidden moves (list of tuples)
         total_moves = set(tuple(tuple(k) for k in h)

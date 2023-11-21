@@ -41,6 +41,7 @@ class Pawn(Enum):
     WHITE = 1
     BLACK = 2
     KING = 3
+    THRONE = 4
 
 
 class Converter:

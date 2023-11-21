@@ -131,7 +131,7 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
             converted_move = game.convert_move(move)
             print("Converted move:", converted_move)
             network.send_move(converted_move)
-            state.display()
+            # state.display()
             pieces, turn = network.get_state()
 
             # Update the game state for the current player
@@ -141,7 +141,7 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
             state = game.result(state, pieces)
 
             print('move:', converted_move, 'time: ', end-start, 's.')
-            state.display()
+            # state.display()
 
             # Notify the other thread
             cond.notify_all()
@@ -151,5 +151,9 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
 
 color = sys.argv[1]
 name = sys.argv[2]
-ip = sys.argv[3] if sys.argv[3] else 'localhost'
+try:
+    ip = sys.argv[3]
+except:
+    ip = "localhost"
+
 play_game(name=name, team=color, server_ip=ip, timeout=60)
