@@ -214,7 +214,7 @@ class Tablut(Game):
                           for h in self.squares)
 
         allowed_moves = total_moves - forbidden_moves
-
+        print("ALLOWED MOVES ", allowed_moves)
         return allowed_moves
 
     def result(self, board, move):
