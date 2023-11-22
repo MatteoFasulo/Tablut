@@ -55,9 +55,11 @@ def h_alphabeta_search(game, state : Board, cutoff=cutoff_depth(5), h=lambda s, 
     @cache
     def max_value(state : Board, alpha, beta, depth):
         if game.terminal_test(state):
+            print("SONO NEL CASO 1 (MAX_VALUE)")
             return game.utility(state, player), None
         if cutoff(game, state, depth):
-            return state.utility, None
+            print("SONO NEL CASO 2 (MAX_VALUE)")
+            return game.compute_utility(state, False), None #FIXME: sostituisci False con il valore corretto di win
         v, move = -infinity, None
         for a in game.actions(state):
             v2, _ = min_value(game.result(state, a), alpha, beta, depth + 1)
@@ -71,9 +73,11 @@ def h_alphabeta_search(game, state : Board, cutoff=cutoff_depth(5), h=lambda s, 
     @cache
     def min_value(state : Board, alpha, beta, depth):
         if game.terminal_test(state):
+            print("SONO NEL CASO 1 (MIN_VALUE)")
             return game.utility(state, player), None
         if cutoff(game, state, depth):
-            return state.utility, None
+            print("SONO NEL CASO 2 (MIN_VALUE)")
+            return game.compute_utility(state, False), None #FIXME: sostituisci False con il valore corretto di win
         v, move = +infinity, None
         for a in game.actions(state):
             v2, _ = max_value(game.result(state, a), alpha, beta, depth + 1)
