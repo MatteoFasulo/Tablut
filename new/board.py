@@ -119,7 +119,7 @@ class Board(defaultdict):
         Returns the number of pieces in the quadrant of selected color
         (1 = left up, 2 = right up, 3 = left down, 4 = right down)
         """
-        if black_or_white not in (1,2):
+        if black_or_white not in (1, 2):
             raise Exception("The color must be 1 (black) or 2 (white)")
 
         num_pieces = 0
@@ -149,5 +149,5 @@ class Board(defaultdict):
                         num_pieces += 1
         else:
             raise Exception("The quadrant number must be between 1 and 4")
-        
+
         return num_pieces

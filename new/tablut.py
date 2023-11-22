@@ -149,7 +149,7 @@ class Tablut(Game):
             for i in range(1, self.width):
                 if from_col - i >= 0:
                     if (flags[0] or (from_row, from_col - i) in occupied_squares) or \
-                        (board.board[from_row][from_col] not in (RED, RED2) and board.board[from_row][from_col - i] in (RED, RED2)):
+                            (board.board[from_row][from_col] not in (RED, RED2) and board.board[from_row][from_col - i] in (RED, RED2)):
 
                         flags[0] = True
                         forbidden_moves.add(
@@ -157,24 +157,24 @@ class Tablut(Game):
 
                 if from_row - i >= 0:
                     if flags[1] or (from_row - i, from_col) in occupied_squares or \
-                        (board.board[from_row][from_col] not in (RED, RED2) and board.board[from_row - i][from_col] in (RED, RED2)):
-                        
+                            (board.board[from_row][from_col] not in (RED, RED2) and board.board[from_row - i][from_col] in (RED, RED2)):
+
                         flags[1] = True
                         forbidden_moves.add(
                             (from_pos, (from_row - i, from_col)))
-                        
+
                 if from_col + i < self.width:
                     if flags[2] or (from_row, from_col+i) in occupied_squares or \
-                        (board.board[from_row][from_col] not in (RED, RED2) and board.board[from_row][from_col + i] in (RED, RED2)):
-                        
+                            (board.board[from_row][from_col] not in (RED, RED2) and board.board[from_row][from_col + i] in (RED, RED2)):
+
                         flags[2] = True
                         forbidden_moves.add(
                             (from_pos, (from_row, from_col+i)))
-                        
+
                 if from_row + i < self.width:
                     if flags[3] or (from_row + i, from_col) in occupied_squares or \
-                        (board.board[from_row][from_col] not in (RED, RED2) and board.board[from_row + i][from_col] in (RED, RED2)):
-                        
+                            (board.board[from_row][from_col] not in (RED, RED2) and board.board[from_row + i][from_col] in (RED, RED2)):
+
                         flags[3] = True
                         forbidden_moves.add(
                             (from_pos, (from_row + i, from_col)))
@@ -207,36 +207,31 @@ class Tablut(Game):
                 )
             )
 
-
-
         # return difference between all possible moves and forbidden moves (list of tuples)
         total_moves = set(tuple(tuple(k) for k in h)
                           for h in self.squares)
 
         allowed_moves = total_moves - forbidden_moves
-        print("ALLOWED MOVES ", allowed_moves)
+
         return allowed_moves
 
     def result(self, board, move):
         """Place a marker for current player on square."""
-        print("SONO DENTRO RESULT")
         player = board.to_move
         board.to_move = 'BLACK' if player == 'WHITE' else 'WHITE'
         win = self.check_win(board)
         fitness = self.compute_utility(board, win)
         board.utility = (
-            99999 if win else fitness if player == 'WHITE' else -fitness)
+            0 if not win else fitness if player == 'WHITE' else -fitness)
         return board
 
     def utility(self, board, player):
         """Return the value to player; 1 for win, -1 for loss, 0 otherwise."""
-        print("##### DENTRO UTILITY #######")
-        print(board.utility)
         return board.utility if player == 'WHITE' else -board.utility
 
     def terminal_test(self, board):
         """A board is a terminal state if it is won or there are no empty squares."""
-        return board.utility > 9999 or board.utility < -9999
+        return board.utility != 0
 
     def compute_utility(self, board, win: bool) -> float:
         """
@@ -270,6 +265,7 @@ class Tablut(Game):
         white_pieces = board.white
         black_pieces = board.black
         king_pieces = board.king
+
         # TODO Check if the king is captured
 
         # @Teddy XXX: I'm assuming that king_pieces is in the form (x, y)
