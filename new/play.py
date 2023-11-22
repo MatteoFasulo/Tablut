@@ -45,68 +45,48 @@ def cutoff_depth(d):
     """A cutoff function that searches to depth d."""
     return lambda game, state, depth: depth > d
 
-# TODO change depth (d)
 
+def h_alphabeta_search(game, state, cutoff=cutoff_depth(10)):
+    """Search game to determine best action; use alpha-beta pruning.
+    As in [Figure 5.7], this version searches all the way to the leaves."""
 
-def h_alphabeta_search(game, state : Board, cutoff=cutoff_depth(5), h=lambda s, p: 0):
     player = state.to_move
-    print(f'SONO DENTRO ALPHABETA SEARCH TEAM {player}')
 
     @cache
-    def max_value(state : Board, alpha, beta, depth):
-        print(f"SONO IN MAX VALUE depth = {depth}")
+    def max_value(state, alpha, beta, depth):
         if game.terminal_test(state):
-            print("SONO NEL CASO 1 (MAX_VALUE)")
             return game.utility(state, player), None
         if cutoff(game, state, depth):
-            print("SONO NEL CASO 2 (MAX_VALUE)")
-            return game.compute_utility(state, False), None #FIXME: sostituisci False con il valore corretto di win
+            print("CUTOFF")
+            return game.compute_utility(state), None
         v, move = -infinity, None
-        print("STO PRINTANDO LE GAME ACTIONS")
-        print(game.actions(state))
         for a in game.actions(state):
-            v2, _ = min_value(game.result(state, a), alpha, beta, depth + 1)
-            print("STO CONSIDERANDO [MAX_VALUE] ",a)
-            print(f'QUESTO è V: {v}, QUESTO è v2: {v2}, QUESTO è move: {move}, QUESTO è alpha: {alpha}, QUESTO è beta: {beta}')
+            v2, _ = min_value(game.result(state, a), alpha, beta, depth+1)
+            print("MIN VALUE: ", v2)
             if v2 > v:
-                print("SONO NEL CASO v2 > v PER MAX VALUES")
                 v, move = v2, a
                 alpha = max(alpha, v)
-                print(f'NUOVO ALPHA CALCOALTO: {alpha}')
             if v >= beta:
-                print("SONO ENTRATO QUA DENTRO [MAX_VALUES]")
                 return v, move
-        print("SONO FUORI DAL FOR [MAX_VALUES]")
-        
         return v, move
 
     @cache
-    def min_value(state : Board, alpha, beta, depth):
-        print(f"SONO IN MIN VALUE depth = {depth}")
+    def min_value(state, alpha, beta, depth):
         if game.terminal_test(state):
-            print("SONO NEL CASO 1 (MIN_VALUE)")
             return game.utility(state, player), None
         if cutoff(game, state, depth):
-            print("SONO NEL CASO 2 (MIN_VALUE)")
-            return game.compute_utility(state, False), None #FIXME: sostituisci False con il valore corretto di win
+            print("CUTOFF")
+            return game.compute_utility(state), None
         v, move = +infinity, None
-        print("STO PRINTANDO LE GAME ACTIONS")
-        print(game.actions(state))
         for a in game.actions(state):
+            print(a)
             v2, _ = max_value(game.result(state, a), alpha, beta, depth + 1)
-            print("STO CONSIDERANDO [MIN_VALUE] ",a)
-            print(f'QUESTO è V: {v}, QUESTO è v2: {v2}, QUESTO è move: {move}, QUESTO è alpha: {alpha}, QUESTO è beta: {beta}')
+            print("MAX VALUE: ", v2)
             if v2 < v:
-                print('SONO NEL CASO V2 < V PER MIN VALUES')
                 v, move = v2, a
                 beta = min(beta, v)
-                print(f'NUOVO BETA CALCOLATO: {beta}')
             if v <= alpha:
-                print("SONO ENTRATO QUA DENTRO [MIN_VALUES]")
                 return v, move
-
-        print("SSONO FUORI DAL FOR [MIN_VALUES]")
-        
         return v, move
 
     return max_value(state, -infinity, +infinity, 0)
@@ -122,7 +102,7 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
     pieces, turn = network.connect()
 
     # Initialize game
-    game = Tablut(team, pieces)
+    game = Tablut()
     game.update_state(pieces, turn)
 
     # Create a condition variable
@@ -138,9 +118,6 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
                 cond.wait(timeout=1)
                 pieces, turn = network.get_state()
 
-                print(f"PIECES:\n{pieces}")
-                print(f"TURN:\n{turn}")
-
                 # Update the game state for the current player
                 game.update_state(pieces, turn)
 
@@ -150,13 +127,17 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
                 future = executor.submit(
                     h_alphabeta_search, game, state)
                 move = future.result()[-1]
-            end = time.time()
 
-            print('Chosen move:', move)
+                # Idea (calculate another move in parallel from the result of the first best move)
+                # future = executor.submit(
+                #    h_alphabeta_search, game, game.result(state, move))
+                # move = future.result()[-1]
+            end = time.time()
 
             # Send move to server
             converted_move = game.convert_move(move)
-            print("Converted move:", converted_move)
+            print(
+                f"Move: {move} | Converted to: {converted_move} | time: {end-start} s.")
             network.send_move(converted_move)
             # state.display()
             pieces, turn = network.get_state()
@@ -165,9 +146,8 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
             game.update_state(pieces, turn)
 
             # Update state
-            state = game.result(state, pieces)
+            state = game.result(state, move)
 
-            print('move:', converted_move, 'time: ', end-start, 's.')
             # state.display()
 
             # Notify the other thread

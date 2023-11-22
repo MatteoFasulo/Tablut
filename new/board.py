@@ -64,6 +64,7 @@ class Board(defaultdict):
         pawns = np.where(self.pieces == Pawn.BLACK.value)
         coordinates = list(zip(pawns[1], pawns[0]))
         self.black = coordinates
+        self.blacks = self.black
         return coordinates
 
     def get_king(self):
