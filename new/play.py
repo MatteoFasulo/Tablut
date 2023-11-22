@@ -57,7 +57,7 @@ def h_alphabeta_search(game, state : Board, cutoff=cutoff_depth(5), h=lambda s, 
         if game.terminal_test(state):
             return game.utility(state, player), None
         if cutoff(game, state, depth):
-            return h(state, player), None
+            return state.utility, None
         v, move = -infinity, None
         for a in game.actions(state):
             v2, _ = min_value(game.result(state, a), alpha, beta, depth + 1)
@@ -73,7 +73,7 @@ def h_alphabeta_search(game, state : Board, cutoff=cutoff_depth(5), h=lambda s, 
         if game.terminal_test(state):
             return game.utility(state, player), None
         if cutoff(game, state, depth):
-            return h(state, player), None
+            return state.utility, None
         v, move = +infinity, None
         for a in game.actions(state):
             v2, _ = max_value(game.result(state, a), alpha, beta, depth + 1)
