@@ -130,30 +130,56 @@ class Tablut(Game):
                 False
             ]
 
+            """
+            self.board = [
+            [GRAY, WHITE, WHITE2, RED2, RED, RED2, WHITE2, WHITE, GRAY],
+            [WHITE, WHITE2, WHITE, WHITE2, RED2, WHITE2, WHITE, WHITE2, WHITE],
+            [WHITE2, WHITE, WHITE2, WHITE, GREEN, WHITE, WHITE2, WHITE, WHITE2],
+            [RED2, WHITE2, WHITE, WHITE2, GREEN2, WHITE2, WHITE, WHITE2, RED2],
+            [RED, RED2, GREEN, GREEN2, BLUE, GREEN2, GREEN, RED2, RED],
+            [RED2, WHITE2, WHITE, WHITE2, GREEN2, WHITE2, WHITE, WHITE2, RED2],
+            [WHITE2, WHITE, WHITE2, WHITE, GREEN, WHITE, WHITE2, WHITE, WHITE2],
+            [WHITE, WHITE2, WHITE, WHITE2, RED2, WHITE2, WHITE, WHITE2, WHITE],
+            [GRAY, WHITE, WHITE2, RED2, RED, RED2, WHITE2, WHITE, GRAY],
+        ]
+            """
+
+            # If i move from outside a barrack inside a barrack, that move is invalid. But i can move freely move inside barracks
+            from utils import RED, RED2
             for i in range(1, self.width):
                 if from_col - i >= 0:
-                    if flags[0] or (from_row, from_col - i) in occupied_squares:
+                    if (flags[0] or (from_row, from_col - i) in occupied_squares) or \
+                        (board.board[from_row][from_col] not in (RED, RED2) and board.board[from_row][from_col - i] in (RED, RED2)):
+
                         flags[0] = True
                         forbidden_moves.add(
                             (from_pos, (from_row, from_col - i)))
+
                 if from_row - i >= 0:
-                    if flags[1] or (from_row - i, from_col) in occupied_squares:
+                    if flags[1] or (from_row - i, from_col) in occupied_squares or \
+                        (board.board[from_row][from_col] not in (RED, RED2) and board.board[from_row - i][from_col] in (RED, RED2)):
+                        
                         flags[1] = True
                         forbidden_moves.add(
                             (from_pos, (from_row - i, from_col)))
+                        
                 if from_col + i < self.width:
-                    if flags[2] or (from_row, from_col+i) in occupied_squares:
+                    if flags[2] or (from_row, from_col+i) in occupied_squares or \
+                        (board.board[from_row][from_col] not in (RED, RED2) and board.board[from_row][from_col + i] in (RED, RED2)):
+                        
                         flags[2] = True
                         forbidden_moves.add(
                             (from_pos, (from_row, from_col+i)))
+                        
                 if from_row + i < self.width:
-                    if flags[3] or (from_row + i, from_col) in occupied_squares:
+                    if flags[3] or (from_row + i, from_col) in occupied_squares or \
+                        (board.board[from_row][from_col] not in (RED, RED2) and board.board[from_row + i][from_col] in (RED, RED2)):
+                        
                         flags[3] = True
                         forbidden_moves.add(
                             (from_pos, (from_row + i, from_col)))
 
             # Barrack's check
-            # TODO: check if this notation (the coords) is correct
             barracks = (
                 (
                     (0, 3),
@@ -180,11 +206,8 @@ class Tablut(Game):
                     (4, self.width-2),
                 )
             )
-            # If i move from outside a barrack inside a barrack, that move is invalid. But i can move freely move inside barracks
-            # TODO check for the whole path from "from_pos" to "to_pos", trampling over
-            for barrack in barracks:
-                if from_pos not in barrack and to_pos in barrack:
-                    forbidden_moves.add((from_pos, to_pos))
+
+
 
         # return difference between all possible moves and forbidden moves (list of tuples)
         total_moves = set(tuple(tuple(k) for k in h)
