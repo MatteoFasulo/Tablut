@@ -113,3 +113,41 @@ class Board(defaultdict):
         ax.set_yticklabels(['1', '2', '3', '4', '5', '6', '7', '8', '9'])
         plt.show(block=False)
         plt.pause(5)
+
+    def check_num_pieces_in_quadrant(self, n_quadrant, black_or_white):
+        """
+        Returns the number of pieces in the quadrant of selected color
+        (1 = left up, 2 = right up, 3 = left down, 4 = right down)
+        """
+        if black_or_white not in (1,2):
+            raise Exception("The color must be 1 (black) or 2 (white)")
+
+        num_pieces = 0
+        if n_quadrant == 1:
+            quadrant = [row[:4] for row in self.board[:4]]
+            for i in range(4):
+                for j in range(4):
+                    if quadrant[i][j] == black_or_white:
+                        num_pieces += 1
+        elif n_quadrant == 2:
+            quadrant = [row[5:] for row in self.board[:4]]
+            for i in range(4):
+                for j in range(4):
+                    if quadrant[i][j] == black_or_white:
+                        num_pieces += 1
+        elif n_quadrant == 3:
+            quadrant = [row[:4] for row in self.board[5:]]
+            for i in range(4):
+                for j in range(4):
+                    if quadrant[i][j] == black_or_white:
+                        num_pieces += 1
+        elif n_quadrant == 4:
+            quadrant = [row[5:] for row in self.board[5:]]
+            for i in range(4):
+                for j in range(4):
+                    if quadrant[i][j] == black_or_white:
+                        num_pieces += 1
+        else:
+            raise Exception("The quadrant number must be between 1 and 4")
+        
+        return num_pieces
