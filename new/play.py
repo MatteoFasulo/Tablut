@@ -49,11 +49,12 @@ def cutoff_depth(d):
 
 
 def h_alphabeta_search(game, state : Board, cutoff=cutoff_depth(5), h=lambda s, p: 0):
-
+    print('SONO DENTRO ALPHABETA SEARCH')
     player = state.to_move
 
     @cache
     def max_value(state : Board, alpha, beta, depth):
+        print("SONO IN MAX VALUE")
         if game.terminal_test(state):
             print("SONO NEL CASO 1 (MAX_VALUE)")
             return game.utility(state, player), None
@@ -72,6 +73,7 @@ def h_alphabeta_search(game, state : Board, cutoff=cutoff_depth(5), h=lambda s, 
 
     @cache
     def min_value(state : Board, alpha, beta, depth):
+        print("SONO IN MIN VALUE")
         if game.terminal_test(state):
             print("SONO NEL CASO 1 (MIN_VALUE)")
             return game.utility(state, player), None
