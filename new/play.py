@@ -49,12 +49,12 @@ def cutoff_depth(d):
 
 
 def h_alphabeta_search(game, state : Board, cutoff=cutoff_depth(5), h=lambda s, p: 0):
-    print('SONO DENTRO ALPHABETA SEARCH')
     player = state.to_move
+    print(f'SONO DENTRO ALPHABETA SEARCH TEAM {player}')
 
     @cache
     def max_value(state : Board, alpha, beta, depth):
-        print("SONO IN MAX VALUE")
+        print(f"SONO IN MAX VALUE depth = {depth}")
         if game.terminal_test(state):
             print("SONO NEL CASO 1 (MAX_VALUE)")
             return game.utility(state, player), None
@@ -62,18 +62,24 @@ def h_alphabeta_search(game, state : Board, cutoff=cutoff_depth(5), h=lambda s, 
             print("SONO NEL CASO 2 (MAX_VALUE)")
             return game.compute_utility(state, False), None #FIXME: sostituisci False con il valore corretto di win
         v, move = -infinity, None
+        print(game.actions(state))
         for a in game.actions(state):
             v2, _ = min_value(game.result(state, a), alpha, beta, depth + 1)
+            print("STO CONSIDERANDO [MAX_VALUE] ",a)
+            print(f'QUESTO è V: {v}, QUESTO è v2: {v2}, QUESTO è move: {move}, QUESTO è alpha: {alpha}, QUESTO è beta: {beta}')
             if v2 > v:
                 v, move = v2, a
                 alpha = max(alpha, v)
             if v >= beta:
+                print("SONO ENTRATO QUA DENTRO [MAX_VALUES]")
                 return v, move
+        print("SONO FUORI DAL FOR [MAX_VALUES]")
+        
         return v, move
 
     @cache
     def min_value(state : Board, alpha, beta, depth):
-        print("SONO IN MIN VALUE")
+        print(f"SONO IN MIN VALUE depth = {depth}")
         if game.terminal_test(state):
             print("SONO NEL CASO 1 (MIN_VALUE)")
             return game.utility(state, player), None
@@ -81,13 +87,20 @@ def h_alphabeta_search(game, state : Board, cutoff=cutoff_depth(5), h=lambda s, 
             print("SONO NEL CASO 2 (MIN_VALUE)")
             return game.compute_utility(state, False), None #FIXME: sostituisci False con il valore corretto di win
         v, move = +infinity, None
+        print(game.actions(state))
         for a in game.actions(state):
             v2, _ = max_value(game.result(state, a), alpha, beta, depth + 1)
+            print("STO CONSIDERANDO [MIN_VALUE] ",a)
+            print(f'QUESTO è V: {v}, QUESTO è v2: {v2}, QUESTO è move: {move}, QUESTO è alpha: {alpha}, QUESTO è beta: {beta}')
             if v2 < v:
                 v, move = v2, a
                 beta = min(beta, v)
             if v <= alpha:
+                print("SONO ENTRATO QUA DENTRO [MIN_VALUES]")
                 return v, move
+
+        print("SSONO FUORI DAL FOR [MIN_VALUES]")
+        
         return v, move
 
     return max_value(state, -infinity, +infinity, 0)
