@@ -219,21 +219,24 @@ class Tablut(Game):
 
     def result(self, board, move):
         """Place a marker for current player on square."""
+        print("SONO DENTRO RESULT")
         player = board.to_move
         board.to_move = 'BLACK' if player == 'WHITE' else 'WHITE'
         win = self.check_win(board)
         fitness = self.compute_utility(board, win)
         board.utility = (
-            0 if not win else fitness if player == 'WHITE' else -fitness)
+            99999 if win else fitness if player == 'WHITE' else -fitness)
         return board
 
     def utility(self, board, player):
         """Return the value to player; 1 for win, -1 for loss, 0 otherwise."""
+        print("##### DENTRO UTILITY #######")
+        print(board.utility)
         return board.utility if player == 'WHITE' else -board.utility
 
     def terminal_test(self, board):
         """A board is a terminal state if it is won or there are no empty squares."""
-        return board.utility != 0
+        return board.utility > 9999 or board.utility < -9999
 
     def compute_utility(self, board, win: bool) -> float:
         """
@@ -267,7 +270,6 @@ class Tablut(Game):
         white_pieces = board.white
         black_pieces = board.black
         king_pieces = board.king
-
         # TODO Check if the king is captured
 
         # @Teddy XXX: I'm assuming that king_pieces is in the form (x, y)

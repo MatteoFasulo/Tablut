@@ -15,6 +15,8 @@ from tablut import Tablut
 # utils
 from utils import Network
 
+from board import Board
+
 
 def random_player(game, state):
     return random.choice(list(game.actions(state)))
@@ -46,19 +48,19 @@ def cutoff_depth(d):
 # TODO change depth (d)
 
 
-def h_alphabeta_search(game, state, cutoff=cutoff_depth(5), h=lambda s, p: 0):
+def h_alphabeta_search(game, state : Board, cutoff=cutoff_depth(5), h=lambda s, p: 0):
 
     player = state.to_move
 
     @cache
-    def max_value(state, alpha, beta, depth):
+    def max_value(state : Board, alpha, beta, depth):
         if game.terminal_test(state):
             return game.utility(state, player), None
         if cutoff(game, state, depth):
             return h(state, player), None
         v, move = -infinity, None
         for a in game.actions(state):
-            v2, _ = min_value(game.result(state, a).utility, alpha, beta, depth + 1)
+            v2, _ = min_value(game.result(state, a), alpha, beta, depth + 1)
             if v2 > v:
                 v, move = v2, a
                 alpha = max(alpha, v)
@@ -67,14 +69,14 @@ def h_alphabeta_search(game, state, cutoff=cutoff_depth(5), h=lambda s, p: 0):
         return v, move
 
     @cache
-    def min_value(state, alpha, beta, depth):
+    def min_value(state : Board, alpha, beta, depth):
         if game.terminal_test(state):
             return game.utility(state, player), None
         if cutoff(game, state, depth):
             return h(state, player), None
         v, move = +infinity, None
         for a in game.actions(state):
-            v2, _ = max_value(game.result(state, a).utility, alpha, beta, depth + 1)
+            v2, _ = max_value(game.result(state, a), alpha, beta, depth + 1)
             if v2 < v:
                 v, move = v2, a
                 beta = min(beta, v)
