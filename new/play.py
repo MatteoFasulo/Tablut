@@ -58,7 +58,7 @@ def h_alphabeta_search(game, state, cutoff=cutoff_depth(5), h=lambda s, p: 0):
             return h(state, player), None
         v, move = -infinity, None
         for a in game.actions(state):
-            v2, _ = min_value(game.result(state, a), alpha, beta, depth + 1)
+            v2, _ = min_value(game.result(state, a).utility, alpha, beta, depth + 1)
             if v2 > v:
                 v, move = v2, a
                 alpha = max(alpha, v)
@@ -74,7 +74,7 @@ def h_alphabeta_search(game, state, cutoff=cutoff_depth(5), h=lambda s, p: 0):
             return h(state, player), None
         v, move = +infinity, None
         for a in game.actions(state):
-            v2, _ = max_value(game.result(state, a), alpha, beta, depth + 1)
+            v2, _ = max_value(game.result(state, a).utility, alpha, beta, depth + 1)
             if v2 < v:
                 v, move = v2, a
                 beta = min(beta, v)
