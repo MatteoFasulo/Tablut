@@ -62,14 +62,17 @@ def h_alphabeta_search(game, state : Board, cutoff=cutoff_depth(5), h=lambda s, 
             print("SONO NEL CASO 2 (MAX_VALUE)")
             return game.compute_utility(state, False), None #FIXME: sostituisci False con il valore corretto di win
         v, move = -infinity, None
+        print("STO PRINTANDO LE GAME ACTIONS")
         print(game.actions(state))
         for a in game.actions(state):
             v2, _ = min_value(game.result(state, a), alpha, beta, depth + 1)
             print("STO CONSIDERANDO [MAX_VALUE] ",a)
             print(f'QUESTO è V: {v}, QUESTO è v2: {v2}, QUESTO è move: {move}, QUESTO è alpha: {alpha}, QUESTO è beta: {beta}')
             if v2 > v:
+                print("SONO NEL CASO v2 > v PER MAX VALUES")
                 v, move = v2, a
                 alpha = max(alpha, v)
+                print(f'NUOVO ALPHA CALCOALTO: {alpha}')
             if v >= beta:
                 print("SONO ENTRATO QUA DENTRO [MAX_VALUES]")
                 return v, move
@@ -87,14 +90,17 @@ def h_alphabeta_search(game, state : Board, cutoff=cutoff_depth(5), h=lambda s, 
             print("SONO NEL CASO 2 (MIN_VALUE)")
             return game.compute_utility(state, False), None #FIXME: sostituisci False con il valore corretto di win
         v, move = +infinity, None
+        print("STO PRINTANDO LE GAME ACTIONS")
         print(game.actions(state))
         for a in game.actions(state):
             v2, _ = max_value(game.result(state, a), alpha, beta, depth + 1)
             print("STO CONSIDERANDO [MIN_VALUE] ",a)
             print(f'QUESTO è V: {v}, QUESTO è v2: {v2}, QUESTO è move: {move}, QUESTO è alpha: {alpha}, QUESTO è beta: {beta}')
             if v2 < v:
+                print('SONO NEL CASO V2 < V PER MIN VALUES')
                 v, move = v2, a
                 beta = min(beta, v)
+                print(f'NUOVO BETA CALCOLATO: {beta}')
             if v <= alpha:
                 print("SONO ENTRATO QUA DENTRO [MIN_VALUES]")
                 return v, move
