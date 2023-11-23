@@ -70,8 +70,11 @@ class Board(defaultdict):
     def get_king(self):
         pawns = np.where(self.pieces == Pawn.KING.value)
         coordinates = list(zip(pawns[1], pawns[0]))
-        self.king = coordinates[0]
-        return coordinates[0]
+        try:
+            self.king = coordinates[0]
+            return coordinates[0]
+        except IndexError:  # king has been captured
+            return None
 
     def _is_there_a_clear_view(self, piece1, piece2):
         if piece1[0] == piece2[0]:

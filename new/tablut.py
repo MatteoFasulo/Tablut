@@ -74,13 +74,15 @@ class Tablut(Game):
         # Get the list of the opponent pieces
         if player == 'WHITE':
             player_pieces = white
-            player_pieces.append(king)
+            if king is not None:
+                player_pieces.append(king)
             opponent_pieces = black
 
         elif player == 'BLACK':
             player_pieces = black
             opponent_pieces = white
-            opponent_pieces.append(king)
+            if king is not None:
+                opponent_pieces.append(king)
 
         # Get the list of the occupied squares in coordinates (x, y)
         # occupied_squares = np.argwhere(
@@ -220,6 +222,18 @@ class Tablut(Game):
         board = self.copy_and_modify(
             state.to_move, state.utility)
 
+        # Given the move, compute the new board state
+        # pieces should be the previous state with the move applied
+        from_pos, to_pos = move
+        x1, y1 = from_pos
+        x2, y2 = to_pos
+
+        pawn_type = board.initial.pieces[x1][y1]
+        board.initial.pieces[x1][y1] = Pawn.EMPTY.value
+        board.initial.pieces[x2][y2] = pawn_type
+
+        board.update_state(board.initial.pieces, board.to_move)
+
         # Bound to initial board
         new_board = board.initial
 
@@ -228,6 +242,8 @@ class Tablut(Game):
 
         # Compute the utility of the board
         win = self.terminal_test(new_board)
+        print("Win:", win)
+        print("Player:", state.to_move)
         fitness = self.compute_utility(board, move, player=state.to_move)
 
         # Update the utility of the board
@@ -261,20 +277,17 @@ class Tablut(Game):
             fitness = white_fitness(board.initial, alpha0, beta0,
                                     gamma0, theta0=0, epsilon0=1)
 
-            print("Fitness:", fitness)
-
         elif player == 'BLACK':
 
             # Heuristic weights
-            alpha0 = 100  # Adjust these weights as needed
-            beta0 = 1
-            gamma0 = -10
+            alpha0 = -5  # Adjust these weights as needed
+            beta0 = 0.04
+            gamma0 = -1000
 
             fitness = black_fitness_dynamic(
                 board.initial, move, Pawn.BLACK.value, board.black_moves_to_eat_king, alpha0, beta0, gamma0)
 
-            print("Fitness:", fitness)
-
+        print("Fitness:", fitness)
         return fitness
 
     def check_win(self, board):
@@ -296,6 +309,9 @@ class Tablut(Game):
         if king_pieces[0] == self.width-1 or king_pieces[1] == self.width-1 or king_pieces[0] == 0 or king_pieces[1] == 0:
             # @Teddy XXX: Do i have to return True or False if white wins?
             return True
+
+        if king_pieces is None:
+            return True  # king is dead
 
         # TODO Check if the king is surrounded
         # @Teddy: Isn't this redundant? We already check if the king is alive or dead

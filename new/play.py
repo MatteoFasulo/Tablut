@@ -3,6 +3,9 @@ import sys
 import random
 import time
 
+# numpy
+import numpy as np
+
 # threading
 import threading
 
@@ -27,9 +30,6 @@ def player(search_algorithm):
     return lambda game, state: search_algorithm(game, state)[1]
 
 
-infinity = float('inf')
-
-
 def cache(function):
     "Like lru_cache(None), but only considers the first argument of function."
     cache = {}
@@ -46,7 +46,7 @@ def cutoff_depth(d):
     return lambda game, state, depth: depth > d
 
 
-def h_alphabeta_search(game, state, cutoff=cutoff_depth(10)):
+def h_alphabeta_search(state, game, cutoff=cutoff_depth(6)):
     """Search game to determine best action; use alpha-beta pruning.
     As in [Figure 5.7], this version searches all the way to the leaves."""
 
@@ -58,11 +58,10 @@ def h_alphabeta_search(game, state, cutoff=cutoff_depth(10)):
             return game.utility(state, player), None
         if cutoff(game, state, depth):
             print("CUTOFF")
-            return game.compute_utility(state), None
-        v, move = -infinity, None
+            return game.utility(state, player), None
+        v, move = -np.inf, None
         for a in game.actions(state):
             v2, _ = min_value(game.result(state, a), alpha, beta, depth+1)
-            print("MIN VALUE: ", v2)
             if v2 > v:
                 v, move = v2, a
                 alpha = max(alpha, v)
@@ -76,12 +75,11 @@ def h_alphabeta_search(game, state, cutoff=cutoff_depth(10)):
             return game.utility(state, player), None
         if cutoff(game, state, depth):
             print("CUTOFF")
-            return game.compute_utility(state), None
-        v, move = +infinity, None
+            return game.utility(state, player), None
+        v, move = +np.inf, None
         for a in game.actions(state):
             print(a)
             v2, _ = max_value(game.result(state, a), alpha, beta, depth + 1)
-            print("MAX VALUE: ", v2)
             if v2 < v:
                 v, move = v2, a
                 beta = min(beta, v)
@@ -89,7 +87,7 @@ def h_alphabeta_search(game, state, cutoff=cutoff_depth(10)):
                 return v, move
         return v, move
 
-    return max_value(state, -infinity, +infinity, 0)
+    return max_value(state, -np.inf, +np.inf, 0)
 
 
 def play_game(name: str, team: str, server_ip: str, timeout: int):
@@ -125,19 +123,16 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
             start = time.time()
             with ThreadPoolExecutor(max_workers=os.cpu_count() + 4) as executor:
                 future = executor.submit(
-                    h_alphabeta_search, game, state)
-                move = future.result()[-1]
-
-                # Idea (calculate another move in parallel from the result of the first best move)
-                # future = executor.submit(
-                #    h_alphabeta_search, game, game.result(state, move))
-                # move = future.result()[-1]
+                    h_alphabeta_search, state, game)
+                result = future.result()
             end = time.time()
+
+            score, move = result
 
             # Send move to server
             converted_move = game.convert_move(move)
             print(
-                f"Move: {move} | Converted to: {converted_move} | time: {end-start} s.")
+                f"Move: {converted_move} | Score: {score} | time: {end-start} s.")
             network.send_move(converted_move)
             # state.display()
             pieces, turn = network.get_state()
