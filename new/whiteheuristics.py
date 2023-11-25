@@ -1,6 +1,4 @@
-# import boardmanager
-# import copy
-import numpy as np
+import copy
 
 
 def can_this_tile_be_reached_by_a_black_pawn(board, x, y):
@@ -152,83 +150,77 @@ def white_fitness(board, alpha0, beta0, gamma0, theta0, epsilon0):
 
 
 # DYNAMIC ANALYSIS (analyze a move given in input)
-# def white_fitness_dynamic(board: boardmanager, move: str, piece: int, alpha0, beta0, gamma0):
-#    assert piece in [1, 2, 3], "piece should be 1 (black), 2(white) or 3(king)"
-#    """
-#    move must be written in the notation (x1,y1,x2,y2)
-#    the board must be in the state BEFORE the move
-#    piece is the piece that has been moved (1 black, 2 white, 3 king)
-#    """
-#    x1, y1, x2, y2 = move
-#    local_pieces = copy.deepcopy(board.pieces)
-#    local_pieces[x2][y2] = local_pieces[x1][y1]
-#    local_pieces[x1][y1] = 0
-#
-#    if piece == 1:
-#        local_whites = copy.deepcopy(board.whites)
-#        # DO NOT CHANGE local_black and local_king SINCE THEY ARE REFERRING TO THE ACTUAL BOARD, THEY ARE READ ONLY
-#        local_black = board.blacks
-#        local_king = board.king
-#        for white in local_whites:
-#            if white[0] == x1 and white[1] == y1:
-#                del white
-#                break
-#    elif piece == 2:
-#        local_whites = board.whites
-#        local_black = copy.deepcopy(board.blacks)
-#        local_king = board.king
-#        for black in local_black:
-#            if black[0] == x1 and black[1] == y1:
-#                del black
-#                break
-#    else:
-#        local_whites = board.whites
-#        local_black = board.blacks
-#        local_king = copy.deepcopy(board.king)
-#        local_king = [x2, y2]
-#
-#    fitness = 0
-#    # Use only the local_XXXX variables in a read only way
-#    if move in board.white_moves_to_eat:
-#        fitness += alpha0
-#
-#    if piece == 3:
-#        # A king bad position is a position if there are blacks around him
-#        n_blacks = 0
-#        if local_pieces[local_king[0]][local_king[1]+1] == 1:
-#            n_blacks += 1
-#        if local_pieces[local_king[0]+1][local_king[1]] == 1:
-#            n_blacks += 1
-#        if local_pieces[local_king[0]][local_king[1]-1] == 1:
-#            n_blacks += 1
-#        if local_pieces[local_king[0]-1][local_king[1]] == 1:
-#            n_blacks += 1
-#
-#        fitness += n_blacks * beta0
-#
-#    # If my move get closer to a black piece, do that
-#    if piece == 2:
-#        n_blacks = 0
-#        try:
-#            if local_pieces[x2][y2+1] == 1:
-#                n_blacks += 1
-#        except:
-#            pass
-#        try:
-#            if local_pieces[x2+1][y2] == 1:
-#                n_blacks += 1
-#        except:
-#            pass
-#        try:
-#            if local_pieces[x2][y2-1] == 1:
-#                n_blacks += 1
-#        except:
-#            pass
-#        try:
-#            if local_pieces[x2-1][y2] == 1:
-#                n_blacks += 1
-#        except:
-#            pass
-#        fitness += n_blacks * gamma0
-#
-#    return fitness
+def white_fitness_dynamic(board, move: str, piece: int, alpha0, beta0, gamma0):
+    assert piece in [1, 2, 3], "piece should be 1 (black), 2(white) or 3(king)"
+    """
+   move must be written in the notation (x1,y1,x2,y2)
+   the board must be in the state BEFORE the move
+   piece is the piece that has been moved (1 black, 2 white, 3 king)
+   """
+    ((x1, y1), (x2, y2)) = move
+    local_pieces = copy.deepcopy(board.pieces)
+    local_pieces[x2][y2] = local_pieces[x1][y1]
+    local_pieces[x1][y1] = 0
+    if piece == 1:
+        local_whites = copy.deepcopy(board.whites)
+        # DO NOT CHANGE local_black and local_king SINCE THEY ARE REFERRING TO THE ACTUAL BOARD, THEY ARE READ ONLY
+        local_black = board.blacks
+        local_king = board.king
+        for white in local_whites:
+            if white[0] == x1 and white[1] == y1:
+                del white
+                break
+    elif piece == 2:
+        local_whites = board.whites
+        local_black = copy.deepcopy(board.blacks)
+        local_king = board.king
+        for black in local_black:
+            if black[0] == x1 and black[1] == y1:
+                del black
+                break
+    else:
+        local_whites = board.whites
+        local_black = board.blacks
+        local_king = copy.deepcopy(board.king)
+        local_king = [x2, y2]
+    fitness = 0
+    # Use only the local_XXXX variables in a read only way
+    if move in board.white_moves_to_eat:
+        fitness += alpha0
+    if piece == 3:
+        # A king bad position is a position if there are blacks around him
+        n_blacks = 0
+        if local_pieces[local_king[0]][local_king[1]+1] == 1:
+            n_blacks += 1
+        if local_pieces[local_king[0]+1][local_king[1]] == 1:
+            n_blacks += 1
+        if local_pieces[local_king[0]][local_king[1]-1] == 1:
+            n_blacks += 1
+        if local_pieces[local_king[0]-1][local_king[1]] == 1:
+            n_blacks += 1
+        fitness += n_blacks * beta0
+    # If my move get closer to a black piece, do that
+    if piece == 2:
+        n_blacks = 0
+        try:
+            if local_pieces[x2][y2+1] == 1:
+                n_blacks += 1
+        except:
+            pass
+        try:
+            if local_pieces[x2+1][y2] == 1:
+                n_blacks += 1
+        except:
+            pass
+        try:
+            if local_pieces[x2][y2-1] == 1:
+                n_blacks += 1
+        except:
+            pass
+        try:
+            if local_pieces[x2-1][y2] == 1:
+                n_blacks += 1
+        except:
+            pass
+        fitness += n_blacks * gamma0
+    return fitness

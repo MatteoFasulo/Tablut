@@ -56,6 +56,11 @@ class Board(defaultdict):
         pawns = np.where(self.pieces == Pawn.WHITE.value)
         coordinates = list(zip(pawns[1], pawns[0]))
         self.white = coordinates
+
+        king = self.get_king()
+        if king is not None:
+            self.white.append(king)
+
         self.whites = self.white
         # print(self.white)
         return coordinates
@@ -91,6 +96,128 @@ class Board(defaultdict):
             return True
         else:
             return False
+
+    def check_attacks(self, x, y):
+        # TODO: controllo di mangiata (guardare le regole perché non è chiaro) con solamente un pezzo (e quindi quando ci sono tipo i muri di mezzo)
+        # Horizontal check
+        if x > 1:
+            if self.pieces[x-2][y] == self.pieces[x][y] and self.pieces[x-1][y] != self.pieces[x][y]:
+                self.pieces[x-1][y] = 0
+                has_deleted = False
+                for black in self.blacks:
+                    if black[0] == x-1 and black[1] == y:
+                        del black
+                        has_deleted = True
+                        break
+                if not has_deleted:
+                    for white in self.whites:
+                        if white[0] == x-1 and white[1] == y:
+                            del white
+                            break
+        if x < len(self.pieces)-2:
+            if self.pieces[x+2][y] == self.pieces[x][y] and self.pieces[x+1][y] != self.pieces[x][y]:
+                self.pieces[x+1][y] = 0
+                has_deleted = False
+                for black in self.blacks:
+                    if black[0] == x-1 and black[1] == y:
+                        del black
+                        has_deleted = True
+                        break
+                if not has_deleted:
+                    for white in self.whites:
+                        if white[0] == x-1 and white[1] == y:
+                            del white
+                            break
+        # Vertical check
+        if y > 1:
+            if self.pieces[x][y-2] == self.pieces[x][y] and self.pieces[x][y-1] != self.pieces[x][y]:
+                self.pieces[x][y-1] = 0
+                has_deleted = False
+                for black in self.blacks:
+                    if black[0] == x-1 and black[1] == y:
+                        del black
+                        has_deleted = True
+                        break
+                if not has_deleted:
+                    for white in self.whites:
+                        if white[0] == x-1 and white[1] == y:
+                            del white
+                            break
+        if y < len(self.pieces)-2:
+            if self.pieces[x][y+2] == self.pieces[x][y] and self.pieces[x][y+1] != self.pieces[x][y]:
+                self.pieces[x][y+1] = 0
+                has_deleted = False
+                for black in self.blacks:
+                    if black[0] == x-1 and black[1] == y:
+                        del black
+                        has_deleted = True
+                        break
+                if not has_deleted:
+                    for white in self.whites:
+                        if white[0] == x-1 and white[1] == y:
+                            del white
+                            break
+
+        return self
+
+    def eat_black(self):
+        '''
+        If a black piece can be eaten it returns a list of initial and final position of the white piece that eats
+        '''
+        # TODO: manage possible exception
+        # TODO: If a piece can capture more than one enemy in a move, give more fitness to that move
+        moves_to_eat = []
+        for white in self.whites:
+            # Checking right
+            for i in range(white[1]+1, len(self.pieces)-1, 1):
+                try:
+                    if self.pieces[white[0]+1][i] == 1 and self.pieces[white[0]+2][i] == 2:
+                        moves_to_eat.append([white[0], white[1], white[0], i])
+                    if self.pieces[white[0]-1][i] == 1 and self.pieces[white[0]-2][i] == 2:
+                        moves_to_eat.append([white[0], white[1], white[0], i])
+                except:
+                    pass
+                if self.pieces[white[0]][i] == 1 and self.pieces[white[0]][i+1] == 2:
+                    moves_to_eat.append([white[0], white[1], white[0], i-1])
+                    break
+            # Checking left
+            for i in range(0, white[1]):
+                try:
+                    if self.pieces[white[0]+1][i] == 1 and self.pieces[white[0]+2][i] == 2:
+                        moves_to_eat.append([white[0], white[1], white[0], i])
+                    if self.pieces[white[0]-1][i] == 1 and self.pieces[white[0]-2][i] == 2:
+                        moves_to_eat.append([white[0], white[1], white[0], i])
+                except:
+                    pass
+                if self.pieces[white[0]][i] == 1 and self.pieces[white[0]][i-1] == 2:
+                    moves_to_eat.append([white[0], white[1], i+1])
+                    break
+            # Checking up
+            for i in range(0, white[0]):
+                try:
+                    if self.pieces[i][white[1]+1] == 1 and self.pieces[i][white[1]+2] == 2:
+                        moves_to_eat.append([white[0], white[1], i, white[1]])
+                    if self.pieces[i][white[1]-1] == 1 and self.pieces[i][white[1]-2] == 2:
+                        moves_to_eat.append([white[0], white[1], i, white[1]])
+                except:
+                    pass
+                if self.pieces[i][white[1]] == 1 and self.pieces[i-1][white[1]] == 2:
+                    moves_to_eat.append([white[0], white[1], i+1, white[1]])
+                    break
+            # Checking down
+            for i in range(white[0]+1, len(self.pieces)-1, 1):
+                try:
+                    if self.pieces[i][white[1]+1] == 1 and self.pieces[i][white[1]+2] == 2:
+                        moves_to_eat.append([white[0], white[1], i, white[1]])
+                    if self.pieces[i][white[1]-1] == 1 and self.pieces[i][white[1]-2] == 2:
+                        moves_to_eat.append([white[0], white[1], i, white[1]])
+                except:
+                    pass
+                if self.pieces[i][white[1]] == 1 and self.pieces[i+1][white[1]] == 2:
+                    moves_to_eat.append([white[0], white[1], i-1, white[1]])
+                    break
+
+        self.white_moves_to_eat = moves_to_eat
 
     # Representation of the board
     def display(self):

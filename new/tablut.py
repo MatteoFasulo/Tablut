@@ -13,7 +13,7 @@ from board import Board
 from utils import Pawn
 
 # heuristics
-from whiteheuristics import white_fitness
+from whiteheuristics import white_fitness, white_fitness_dynamic
 from blackheuristics import black_fitness_dynamic
 
 
@@ -49,21 +49,55 @@ class Tablut(Game):
 
         # Get the current player and compute the list of possible moves
         if turn == 'WHITE':
-            self.squares = [[x, (k, l)] for x in white_pos for k in range(
+            self.squares = [[x, (k, l)] for x in white_pos if x is not None for k in range(
                 self.width) for l in range(self.height)]
         elif turn == 'BLACK':
-            self.squares = [[x, (k, l)] for x in black_pos for k in range(
+            self.squares = [[x, (k, l)] for x in black_pos if x is not None for k in range(
                 self.width) for l in range(self.height)]
+
+        # print("White:", white_pos)
+        # print("Black:", black_pos)
 
         self.initial.moves = self.actions(self.initial)
         self.black_moves_to_eat_king = self.eat_king_in_castle()
+
+    def move(self, state, move):
+        """
+        Applies the given move to the board and returns the new board state.
+
+        Args:
+            board (Board): The current board state.
+            move (tuple): The move to be applied, represented as a tuple of two positions.
+
+        Returns:
+            Board: The new board state after applying the move.
+        """
+        # Extract the starting and ending position from the move
+        from_pos, to_pos = move
+        x1, y1 = from_pos
+        x2, y2 = to_pos
+
+        board = state.initial
+
+        # Get the pawn type
+        pawn_type = board.pieces[x1][y1]
+
+        # Remove the pawn from the starting position and add it to the ending position
+        board.pieces[x1][y1] = Pawn.EMPTY.value
+        board.pieces[x2][y2] = pawn_type
+
+        # Check if there are any captures (important otherwise heuristics won't work)
+        board.check_attacks(x2, y2)
+        board.eat_black()
+        # print(board.pieces)
+
+        return board
 
     def actions(self, board) -> set:
         # TODO "mossa che scavalca una citadel è vietata"
 
         white = board.get_white()
         black = board.get_black()
-        king = board.get_king()
         throne = [(4, 4)]
 
         # Get the current player
@@ -74,15 +108,11 @@ class Tablut(Game):
         # Get the list of the opponent pieces
         if player == 'WHITE':
             player_pieces = white
-            if king is not None:
-                player_pieces.append(king)
             opponent_pieces = black
 
         elif player == 'BLACK':
             player_pieces = black
             opponent_pieces = white
-            if king is not None:
-                opponent_pieces.append(king)
 
         # Get the list of the occupied squares in coordinates (x, y)
         # occupied_squares = np.argwhere(
@@ -101,7 +131,10 @@ class Tablut(Game):
         # Starting position (tuple) and ending position (tuple)
         for move in self.squares:
             from_pos = move[0]
-            from_row, from_col = from_pos
+            try:
+                from_row, from_col = from_pos
+            except TypeError:
+                print(f"Something went wrong with the {move = }")
             to_pos = move[1]
             to_row, to_col = to_pos
 
@@ -131,20 +164,6 @@ class Tablut(Game):
                 False,
                 False
             ]
-
-            """
-            self.board = [
-            [GRAY, WHITE, WHITE2, RED2, RED, RED2, WHITE2, WHITE, GRAY],
-            [WHITE, WHITE2, WHITE, WHITE2, RED2, WHITE2, WHITE, WHITE2, WHITE],
-            [WHITE2, WHITE, WHITE2, WHITE, GREEN, WHITE, WHITE2, WHITE, WHITE2],
-            [RED2, WHITE2, WHITE, WHITE2, GREEN2, WHITE2, WHITE, WHITE2, RED2],
-            [RED, RED2, GREEN, GREEN2, BLUE, GREEN2, GREEN, RED2, RED],
-            [RED2, WHITE2, WHITE, WHITE2, GREEN2, WHITE2, WHITE, WHITE2, RED2],
-            [WHITE2, WHITE, WHITE2, WHITE, GREEN, WHITE, WHITE2, WHITE, WHITE2],
-            [WHITE, WHITE2, WHITE, WHITE2, RED2, WHITE2, WHITE, WHITE2, WHITE],
-            [GRAY, WHITE, WHITE2, RED2, RED, RED2, WHITE2, WHITE, GRAY],
-        ]
-            """
 
             # If i move from outside a barrack inside a barrack, that move is invalid. But i can move freely move inside barracks
             from utils import RED, RED2
@@ -222,33 +241,23 @@ class Tablut(Game):
         board = self.copy_and_modify(
             state.to_move, state.utility)
 
-        # Given the move, compute the new board state
-        # pieces should be the previous state with the move applied
-        from_pos, to_pos = move
-        x1, y1 = from_pos
-        x2, y2 = to_pos
-
-        pawn_type = board.initial.pieces[x1][y1]
-        board.initial.pieces[x1][y1] = Pawn.EMPTY.value
-        board.initial.pieces[x2][y2] = pawn_type
-
-        board.update_state(board.initial.pieces, board.to_move)
-
-        # Bound to initial board
-        new_board = board.initial
+        # Apply the move locally and check for captures
+        new_board = self.move(board, move)
 
         # Modify the to_move attribute
         new_board.to_move = ("BLACK" if state.to_move == "WHITE" else "WHITE")
 
-        # Compute the utility of the board
+        board.update_state(new_board.pieces, new_board.to_move)
+
         win = self.terminal_test(new_board)
-        print("Win:", win)
-        print("Player:", state.to_move)
-        fitness = self.compute_utility(board, move, player=state.to_move)
+
+        # Compute the utility of the board
+        fitness = self.compute_utility(
+            new_board, move, player=new_board.to_move)
 
         # Update the utility of the board
-        new_board.utility = (0 if not win else +
-                             1 if new_board.to_move == "WHITE" else -1)
+        new_board.utility = (
+            0 if not win else fitness if new_board.to_move == 'WHITE' else -fitness)
 
         # return the new board
         return new_board
@@ -258,7 +267,7 @@ class Tablut(Game):
         return board.utility if player == 'WHITE' else -board.utility
 
     def terminal_test(self, board):
-        # Check if it is a winning move
+        # Check if it is a winning move or if there are no more starting positions (no more moves)
         return self.check_win(board)
 
     def compute_utility(self, board, move, player) -> float:
@@ -266,28 +275,16 @@ class Tablut(Game):
         Compute the utility of the board for the current state. Some states are more desirable than others. For example, it is better to win in 2 moves than 3 moves. The utility function assigns a score to the board. The higher the score, the more desirable the state. The utility function is a linear combination of the following features... # TODO
         """
 
-        if player == 'WHITE':
+        # if player == 'WHITE':
+        # Heuristic weights
+        alpha0 = 5  # Adjust these weights as needed
+        beta0 = 0.04
+        gamma0 = -1000
 
-            # Heuristic weights
-            alpha0 = -5  # Adjust these weights as needed
-            beta0 = 0.04
-            gamma0 = -1000
-
-            # Additional heuristics
-            fitness = white_fitness(board.initial, alpha0, beta0,
-                                    gamma0, theta0=0, epsilon0=1)
-
-        elif player == 'BLACK':
-
-            # Heuristic weights
-            alpha0 = -5  # Adjust these weights as needed
-            beta0 = 0.04
-            gamma0 = -1000
-
-            fitness = black_fitness_dynamic(
-                board.initial, move, Pawn.BLACK.value, board.black_moves_to_eat_king, alpha0, beta0, gamma0)
-
-        print("Fitness:", fitness)
+        # Additional heuristics
+        fitness = white_fitness(board, alpha0, beta0,
+                                gamma0, theta0=0, epsilon0=1)
+        print(f"Fitness: {fitness}")
         return fitness
 
     def check_win(self, board):
@@ -299,22 +296,26 @@ class Tablut(Game):
         - The same "state" of the game is reached twice: draw
         """
 
-        white_pieces = board.white
-        black_pieces = board.black
-        king_pieces = board.king
+        white_pieces = board.whites
+        black_pieces = board.blacks
+        king_pieces = board.get_king()
 
-        # TODO Check if the king is captured
-
-        # @Teddy XXX: I'm assuming that king_pieces is in the form (x, y)
-        if king_pieces[0] == self.width-1 or king_pieces[1] == self.width-1 or king_pieces[0] == 0 or king_pieces[1] == 0:
-            # @Teddy XXX: Do i have to return True or False if white wins?
+        # No more white pawns
+        if len(white_pieces) == 0:
             return True
 
+        # No more black pawns
+        if len(black_pieces) == 0:
+            return True
+
+        # King is dead (captured)
         if king_pieces is None:
             return True  # king is dead
 
-        # TODO Check if the king is surrounded
-        # @Teddy: Isn't this redundant? We already check if the king is alive or dead
+        # King escaped
+        if king_pieces[0] == self.width-1 or king_pieces[1] == self.width-1 or king_pieces[0] == 0 or king_pieces[1] == 0:
+            # @Teddy XXX: Do i have to return True or False if white wins?
+            return True
 
         return False
 

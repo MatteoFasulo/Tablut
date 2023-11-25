@@ -18,8 +18,6 @@ from tablut import Tablut
 # utils
 from utils import Network
 
-from board import Board
-
 
 def random_player(game, state):
     return random.choice(list(game.actions(state)))
@@ -46,7 +44,7 @@ def cutoff_depth(d):
     return lambda game, state, depth: depth > d
 
 
-def h_alphabeta_search(state, game, cutoff=cutoff_depth(6)):
+def h_alphabeta_search(state, game, cutoff=cutoff_depth(25)):
     """Search game to determine best action; use alpha-beta pruning.
     As in [Figure 5.7], this version searches all the way to the leaves."""
 
@@ -55,13 +53,15 @@ def h_alphabeta_search(state, game, cutoff=cutoff_depth(6)):
     @cache
     def max_value(state, alpha, beta, depth):
         if game.terminal_test(state):
-            return game.utility(state, player), None
+            print("TERMINAL STATE REACHED")
+            return game.compute_utility(state, None, player), None
         if cutoff(game, state, depth):
-            print("CUTOFF")
-            return game.utility(state, player), None
+            print(f"CUTOFF at {depth = }")
+            return game.compute_utility(state, None, player), None
         v, move = -np.inf, None
         for a in game.actions(state):
             v2, _ = min_value(game.result(state, a), alpha, beta, depth+1)
+            print(f"Move: {a} | Score: {v2}")
             if v2 > v:
                 v, move = v2, a
                 alpha = max(alpha, v)
@@ -72,14 +72,15 @@ def h_alphabeta_search(state, game, cutoff=cutoff_depth(6)):
     @cache
     def min_value(state, alpha, beta, depth):
         if game.terminal_test(state):
-            return game.utility(state, player), None
+            print("TERMINAL STATE REACHED")
+            return game.compute_utility(state, None, player), None
         if cutoff(game, state, depth):
-            print("CUTOFF")
-            return game.utility(state, player), None
+            print(f"CUTOFF at {depth = }")
+            return game.compute_utility(state, None, player), None
         v, move = +np.inf, None
         for a in game.actions(state):
-            print(a)
             v2, _ = max_value(game.result(state, a), alpha, beta, depth + 1)
+            print(f"Move: {a} | Score: {v2}")
             if v2 < v:
                 v, move = v2, a
                 beta = min(beta, v)
@@ -109,7 +110,7 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
     # Play game
     state = game.initial
 
-    while not game.terminal_test(state):
+    while True:
         with cond:
             while not network.check_turn(player=team):
                 print('Waiting for opponent move...')
@@ -124,7 +125,7 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
             with ThreadPoolExecutor(max_workers=os.cpu_count() + 4) as executor:
                 future = executor.submit(
                     h_alphabeta_search, state, game)
-                result = future.result()
+                result = future.result(timeout=55)  # Timeout 55 seconds
             end = time.time()
 
             score, move = result
@@ -132,7 +133,7 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
             # Send move to server
             converted_move = game.convert_move(move)
             print(
-                f"Move: {converted_move} | Score: {score} | time: {end-start} s.")
+                f"Move: {converted_move} | Score: {score} | time: {end-start:.4f} s.")
             network.send_move(converted_move)
             # state.display()
             pieces, turn = network.get_state()
@@ -147,8 +148,6 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
 
             # Notify the other thread
             cond.notify_all()
-
-    print('Game over!')
 
 
 color = sys.argv[1]
