@@ -91,6 +91,53 @@ def h_alphabeta_search(state, game, cutoff=cutoff_depth(25)):
     return max_value(state, -np.inf, +np.inf, 0)
 
 
+def alpha_beta_cutoff_search(state, game, d=2, cutoff_test=None, eval_fn=None):
+    """Search game to determine best action; use alpha-beta pruning.
+    This version cuts off search and uses an evaluation function."""
+
+    player = state.to_move
+
+    # Functions used by alpha_beta
+    @cache
+    def max_value(state, alpha, beta, depth):
+        if cutoff_test(state, depth):
+            return eval_fn(state)
+        v = -np.inf
+        for a in game.actions(state):
+            v = max(v, min_value(game.result(state, a), alpha, beta, depth + 1))
+            if v >= beta:
+                return v
+            alpha = max(alpha, v)
+        return v
+
+    @cache
+    def min_value(state, alpha, beta, depth):
+        if cutoff_test(state, depth):
+            return eval_fn(state)
+        v = np.inf
+        for a in game.actions(state):
+            v = min(v, max_value(game.result(state, a), alpha, beta, depth + 1))
+            if v <= alpha:
+                return v
+            beta = min(beta, v)
+        return v
+
+    # Body of alpha_beta_cutoff_search starts here:
+    # The default test cuts off at depth d or at a terminal state
+    cutoff_test = (cutoff_test or (lambda state, depth: depth >
+                   d or game.terminal_test(state)))
+    eval_fn = eval_fn or (lambda state: game.utility(state, player))
+    best_score = -np.inf
+    beta = np.inf
+    best_action = None
+    for a in game.actions(state):
+        v = min_value(game.result(state, a), best_score, beta, 1)
+        if v > best_score:
+            best_score = v
+            best_action = a
+    return best_action
+
+
 def play_game(name: str, team: str, server_ip: str, timeout: int):
     # Clear the screen
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -123,12 +170,13 @@ def play_game(name: str, team: str, server_ip: str, timeout: int):
             # Get move
             start = time.time()
             with ThreadPoolExecutor(max_workers=os.cpu_count() + 4) as executor:
-                future = executor.submit(
-                    h_alphabeta_search, state, game)
+                future = executor.submit(h_alphabeta_search, state, game)
+                # future = executor.submit(alpha_beta_cutoff_search, state, game)
                 result = future.result(timeout=55)  # Timeout 55 seconds
             end = time.time()
 
             score, move = result
+            # score, move = np.nan, result
 
             # Send move to server
             converted_move = game.convert_move(move)

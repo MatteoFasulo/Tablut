@@ -1,4 +1,5 @@
 import copy
+import random
 
 # numpy
 import numpy as np
@@ -13,8 +14,8 @@ from board import Board
 from utils import Pawn
 
 # heuristics
-from whiteheuristics import white_fitness, white_fitness_dynamic
-from blackheuristics import black_fitness_dynamic
+from whiteheuristics import white_fitness  # white_fitness_dynamic
+from blackheuristics import black_fitness  # black_fitness_dynamic
 
 
 class Tablut(Game):
@@ -55,11 +56,13 @@ class Tablut(Game):
             self.squares = [[x, (k, l)] for x in black_pos if x is not None for k in range(
                 self.width) for l in range(self.height)]
 
+        random.shuffle(self.squares)
+
         # print("White:", white_pos)
         # print("Black:", black_pos)
 
         self.initial.moves = self.actions(self.initial)
-        self.black_moves_to_eat_king = self.eat_king_in_castle()
+        self.initial.black_moves_to_eat_king = self.eat_king_in_castle()
 
     def move(self, state, move):
         """
@@ -257,7 +260,7 @@ class Tablut(Game):
 
         # Update the utility of the board
         new_board.utility = (
-            0 if not win else fitness if new_board.to_move == 'WHITE' else -fitness)
+            0 if not win else fitness)
 
         # return the new board
         return new_board
@@ -275,16 +278,31 @@ class Tablut(Game):
         Compute the utility of the board for the current state. Some states are more desirable than others. For example, it is better to win in 2 moves than 3 moves. The utility function assigns a score to the board. The higher the score, the more desirable the state. The utility function is a linear combination of the following features... # TODO
         """
 
-        # if player == 'WHITE':
-        # Heuristic weights
-        alpha0 = 5  # Adjust these weights as needed
-        beta0 = 0.04
-        gamma0 = -1000
+        if player == 'WHITE':
+            # Heuristic weights
+            alpha0 = 1  # Adjust these weights as needed
+            beta0 = -3
+            gamma0 = 0.1
+            theta0 = -100
+            epsilon0 = 22
 
-        # Additional heuristics
-        fitness = white_fitness(board, alpha0, beta0,
-                                gamma0, theta0=0, epsilon0=1)
-        print(f"Fitness: {fitness}")
+            # Additional heuristics
+            fitness = white_fitness(board, alpha0, beta0,
+                                    gamma0, theta0, epsilon0)
+            print(f"Fitness: {fitness}")
+
+        elif player == 'BLACK':
+            # Heuristic weights
+            alpha0 = 6  # Adjust these weights as needed
+            beta0 = 10
+            gamma0 = 9
+            theta0 = 15
+            epsilon0 = 900
+
+            fitness = black_fitness(
+                board, alpha0, beta0, gamma0, theta0, epsilon0)
+            print(f"Fitness: {fitness}")
+
         return fitness
 
     def check_win(self, board):
