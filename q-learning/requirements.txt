@@ -1,0 +1,5 @@
+gymnasium
+numpy
+pygame
+tqdm
+seaborn
