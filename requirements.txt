@@ -1,0 +1,5 @@
+aima
+numpy
+
+# docs
+mkdocs-material

@@ -1,0 +1,11 @@
+VM Link:
+
+Code can be executed using the following command:
+
+```bash
+./runmyplayer.sh white 60 57.93.25.14
+```
+
+the sh script will run `python3 /home/tablut/tablut/play.py --team "$1" --timeout "$2" --ip "$3"` using argparse to parse the arguments.
+Default name of the player is `\tLut` and default timeout is 60 seconds.
+Team name is case insensitive and can be either `white` or `black` which then will be passed to the `--team` argument of the python script as uppercase.
